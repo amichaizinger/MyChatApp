@@ -14,6 +14,8 @@ namespace ChatAppSolid.Models
         CreateGroup,        // Create a new group
         LeaveGroup,         // Leave a group
         GetOnlineUsers,     // Retrieve list of online users
-        AddUserToGroup      // Add another user to a group
+        AddUserToGroup,      // Add another user to a group
+            GetChatHistory,      // Retrieve chat history
+            GetNewUser // gets new users
     }
 }

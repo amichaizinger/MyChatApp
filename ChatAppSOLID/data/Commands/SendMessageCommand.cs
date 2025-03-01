@@ -9,10 +9,11 @@ using ChatAppSOLID.Models;
 using ChatAppSOLID.Services.Interfaces;
 using System.Net.Sockets;
 using System.Text.Json;
+using System.Diagnostics;
 
 namespace ChatAppSOLID.Services.Commands
 {
-    public class SendMessageCommand : ICommand
+    public class SendMessageCommand 
     {
         public string Content { get; }
         public Guid SenderId { get;  }
@@ -28,7 +29,7 @@ namespace ChatAppSOLID.Services.Commands
             GroupId = groupId;
         }
 
-        public async Task ExecuteAsync(Socket clientSocket)
+        public async Task<Message>ExecuteAsync(Socket clientSocket)
         {
             var message = new Message
             {
@@ -47,11 +48,13 @@ namespace ChatAppSOLID.Services.Commands
                 byte[] buffer = Encoding.UTF8.GetBytes(jsonMessage);
                 await clientSocket.SendAsync(buffer, SocketFlags.None);
 
+                return message;
             }
 
-            catch (Exception ex)
+            catch (Exception)
             {
-                ErrorOccurred?.Invoke(this, ex.Message);
+                Debug.WriteLine("message not sent");
+                return null;
             }
         }
     }

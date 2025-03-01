@@ -15,8 +15,8 @@ namespace ChatApp.Server.Models
             LeaveGroup,         // Leave a group
             GetOnlineUsers,     // Retrieve list of online users
             AddUserToGroup,      // Add another user to a group
-            GetHistory,
-         
-        }
+        GetChatHistory      // Retrieve chat history
+
+    }
 }
 

@@ -11,6 +11,7 @@ using ChatAppSOLID.Services.Commands.interfaces;
 using System.Windows;
 using System.Net.Sockets;
 using System.Text.Json;
+using System.Diagnostics;
 
 
 namespace ChatAppSOLID.Services.Commands
@@ -32,7 +33,9 @@ namespace ChatAppSOLID.Services.Commands
             {
                 Command = CommandType.LeaveGroup,
                 GroupId = _groupId,
-                SenderId = _senderId
+                Content = " ",
+                SenderId = _senderId,
+                SentAt = DateTime.Now
             };
             try
             {
@@ -45,7 +48,7 @@ namespace ChatAppSOLID.Services.Commands
 
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke(this, ex.Message);
+                Debug.WriteLine("message not sent");
             }
         }
     }

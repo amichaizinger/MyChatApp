@@ -133,6 +133,15 @@ namespace ChatApp.Server.Services
                     ICommand registerCommand = new RegisterCommand(username, user.Id, "success");
                     await registerCommand.ExecuteAsync(clientSocket);
                     clients[user.Id] = clientSocket;
+
+                    foreach(var client in clients)
+                    {
+                        if (client.Key != user.Id)
+                        {
+                            ICommand newUser = new NewUserCommand(user);
+                            await newUser.ExecuteAsync(client.Value);
+                        }
+                    }
                 }
 
                 else
@@ -150,7 +159,7 @@ namespace ChatApp.Server.Services
         private async Task HandleGetChatHistoryAsync(Guid userId, Socket clientSocket)
         {
             var chatHistory = await _messageService.GetChatHistoryAsync(userId);
-            ICommand getHistory = new GetChatHistoryCommand(userId, history);
+            ICommand getHistory = new GetChatHistoryCommand(userId, chatHistory);
             await getHistory.ExecuteAsync(clientSocket);
         }
 

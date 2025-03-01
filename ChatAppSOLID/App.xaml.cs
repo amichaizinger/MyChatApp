@@ -1,6 +1,8 @@
 ﻿using System.Configuration;
 using System.Data;
 using System.Windows;
+using ChatAppSOLID.Services.NewFolder;
+using ChatAppSOLID.ViewModels;
 
 namespace ChatAppSOLID
 {
@@ -9,13 +11,17 @@ namespace ChatAppSOLID
     /// </summary>
     public partial class App : Application
     {
-        protected override void OnStartup(StartupEventArgs e)
+        private ChatClient _chatClient = new ChatClient();
+        private void Application_Startup(object sender, StartupEventArgs e)
         {
-            base.OnStartup(e);
+            // Use the correct namespace based on your folder structure
+            var loginwindow = new LoginWindow();
+            loginwindow.Show();
+        }
 
-            // Show the login window as the first window instead of MainWindow
-            LoginWindow loginWindow = new LoginWindow();
-            loginWindow.Show();
+        private void Application_Exit(object sender, ExitEventArgs e)
+        {
+            _chatClient.Disconnect();
         }
     }
 

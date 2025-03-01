@@ -10,17 +10,17 @@ using ChatApp.Server.Services.Commands.interfaces;
 
 namespace ChatApp.Server.Commands
 {
-    public class GeChatHistoryCommand
+    public class GetChatHistoryCommand
         : ICommand
     {
         public readonly Guid _senderId;
-        private readonly List<Message> _chats;
+        private readonly List<Chat> _chats;
 
 
-        public GeChatHistoryCommand(Guid senderId, List<Message> messages)
+        public GetChatHistoryCommand(Guid senderId, List<Chat> chats)
         {
             _senderId = senderId;
-            _chats = messages;
+            _chats = chats;
         }
 
         public async Task ExecuteAsync(Socket clientSocket)
@@ -30,7 +30,7 @@ namespace ChatApp.Server.Commands
             {
                 SenderId = _senderId,
                 Content = JsonSerializer.Serialize(_chats),
-                Command = CommandType.GetHistory,
+                Command = CommandType.GetChatHistory,
                 SentAt = DateTime.Now
             };
             string json = JsonSerializer.Serialize(message);

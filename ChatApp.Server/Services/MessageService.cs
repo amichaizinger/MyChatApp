@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using ChatApp.Server.Models;
 using ChatApp.Server.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -39,50 +40,76 @@ namespace ChatApp.Server.Services.NewFolder
                 .OrderBy(m => m.SentAt)
                 .ToListAsync();
 
-            // Step 2: Group messages into chats
+            // Step 2: Fetch all groups the user is part of (with or without messages)
+            var userGroups = await _db.Groups
+                .Where(g => g.Members.Any(u => u.Id == userId))
+                .Include(g => g.Members)
+                .ToListAsync();
+
+            // Step 3: Fetch all registered users (for potential private chats)
+            var allUsers = await _db.Users
+                .Where(u => u.Id != userId) // Exclude the current user
+                .ToListAsync();
+
+            // Step 4: Build the list of chats
             var chats = new List<Chat>();
 
-            // Private chats: Group by the other user (sender or receiver)
+            // 4.1: Private chats from messages (group by the other user)            var chats = new List<Chat>();
             var privateMessages = allMessages.Where(m => !m.GroupId.HasValue);
             var privateChatGroups = privateMessages
                 .GroupBy(m => m.SenderId == userId ? m.ReciverId : m.SenderId) // Key is the other user’s ID
                 .Select(g => new Chat
                 {
-                    Id = g.Key, // Use the other user’s ID as the chat ID for private chats
-                    Name = _db.Users.FirstOrDefault(u => u.Id == g.Key)?.Username ?? "Unknown User", // Fetch username
-                    IsGroup = false,
-                    Messages = new ObservableCollection<Message>(g.ToList()),
-                    Participants = new ObservableCollection<User>
-                    {
-                        new User { Id = g.Key, Username = _db.Users.FirstOrDefault(u => u.Id == g.Key)?.Username ?? "Unknown" },
-                        new User { Id = userId, Username = _db.Users.FirstOrDefault(u => u.Id == userId)?.Username ?? "You" }
-                    }
+                    Name = _db.Users.FirstOrDefault(u => u.Id == g.Key)?.UserName ?? "Unknown User", // Fetch username
+                    GroupId = null,
+                    FriendId = g.Key, // Use the other user’s ID as the chat ID for private chats
+                    Participants = null,
+                    Messages = new ObservableCollection<Message>(g.ToList())
                 });
 
             chats.AddRange(privateChatGroups);
 
-            // Group chats: Group by GroupId
+            // 4.2: Group chats from messages (group by GroupId)
             var groupMessages = allMessages.Where(m => m.GroupId.HasValue);
             var groupChatGroups = groupMessages
                 .GroupBy(m => m.GroupId.Value)
                 .Select(g => new Chat
                 {
-                    Id = g.Key,
                     Name = _db.Groups.FirstOrDefault(gr => gr.Id == g.Key)?.Name ?? "Unnamed Group",
-                    IsGroup = true,
-                    Messages = new ObservableCollection<Message>(g.ToList()),
+                    GroupId = g.Key,
+                    FriendId = null,
                     Participants = new ObservableCollection<User>(
                         _db.Groups
                             .Where(gr => gr.Id == g.Key)
                             .SelectMany(gr => gr.Members)
-                            .ToList())
+                            .ToList()),
+                    Messages = new ObservableCollection<Message>(g.ToList())
                 });
 
             chats.AddRange(groupChatGroups);
 
-            // Step 3: Ensure no duplicate chats (e.g., if a participant has no messages yet)
+            //Step 4.3 add empty chats
+            var remainingGroups = userGroups.Where(g => !chats.Any(c => c.GroupId == g.Id));
+            chats.AddRange(remainingGroups.Select(g => new Chat
+            {
+                Name = g.Name,
+                GroupId = g.Id,
+                FriendId = null,
+                Participants = new ObservableCollection<User>(g.Members),
+                Messages = new ObservableCollection<Message>()
+            }));
+            var remainingUsers = allUsers.Where(u => !chats.Any(c => c.FriendId == u.Id));
+            chats.AddRange(remainingUsers.Select(u => new Chat
+            {
+                Name = u.UserName,
+                GroupId = null,
+                FriendId = u.Id,
+                Participants = null,
+                Messages = new ObservableCollection<Message>()
+            }));
+            // Step 5: Ensure no duplicate chats (e.g., if a participant has no messages yet)
             var distinctChats = chats
-                .GroupBy(c => c.Id)
+                .GroupBy(c => (c.FriendId.HasValue ? c.FriendId : c.GroupId))
                 .Select(g => g.First()) // Take the first instance of each chat ID
                 .ToList();
 

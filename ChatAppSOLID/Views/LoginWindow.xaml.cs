@@ -15,6 +15,10 @@ using System.Windows.Shapes;
 using ChatAppSOLID.Services.Commands;
 using ChatAppSOLID.Services.Interfaces;
 using ChatAppSOLID.Services.NewFolder;
+using System.Net.Sockets;
+using System.Net;
+using System.Diagnostics;
+
 
 namespace ChatAppSOLID
 {
@@ -25,13 +29,26 @@ namespace ChatAppSOLID
     {
         public bool IsPasswordValid = false;
         public bool IsUsernameValid = false;
-        private readonly IChatClient _chtClient;
-        private readonly IChatClient _chatClient = new ChatClient();
-
-        public LoginWindow(IChatClient chatClient)
+        private readonly ChatClient _chatClient = new ChatClient();
+        private readonly RecivedMessageHandler _recivedMessageHandler = new RecivedMessageHandler();
+        private readonly IPAddress _ipAddress = IPAddress.Parse("192.168.150.113");
+        private readonly int _port = 8080;
+        public LoginWindow()
         {
             InitializeComponent();
-            _chatClient = chatClient;
+            Task.Run(async () =>
+            {
+                try
+                {
+                    await _chatClient.ConnectAsync(_ipAddress, _port);
+                    await Task.Run(() => _recivedMessageHandler.RecivedCommandHandlerAsync(_chatClient.ClientSocket));
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Failed to connect to server: {ex.Message}");
+                }
+            }); _recivedMessageHandler.LoginSuccess += LoginSuccess;
+            _recivedMessageHandler.LoginFailure += LoginFailure;
         }
        
         private void UsernameBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -39,6 +56,9 @@ namespace ChatAppSOLID
             if (UsernameBox.Text.Length < 8)
             {
                 UsernameBox.Background = Brushes.Red;
+                RequirementBox.Visibility = Visibility.Visible;
+                requierments.Visibility = Visibility.Visible;
+                LoginButton.IsEnabled = false;
             }
             else
             {
@@ -47,6 +67,7 @@ namespace ChatAppSOLID
 
                 if (IsUsernameValid && IsPasswordValid)
                 {
+                    RequirementBox.Visibility = Visibility.Hidden;
                     requierments.Visibility = Visibility.Hidden;
                     LoginButton.IsEnabled = true;
                 }
@@ -55,9 +76,20 @@ namespace ChatAppSOLID
 
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e) //triggered whenever the password in the PasswordBox changes
         {
-            if(PasswordBox.Password.Length < 8)
+            if (PasswordBox.Password.Length > 0)
+            {
+                passwordPlaceHolder.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                passwordPlaceHolder.Visibility = Visibility.Visible;
+            }
+            if (PasswordBox.Password.Length < 8)
             {
                 PasswordBox.Background = Brushes.Red;
+                RequirementBox.Visibility = Visibility.Visible;
+                requierments.Visibility = Visibility.Visible;
+                LoginButton.IsEnabled = false;
             }
             else
             {
@@ -66,6 +98,7 @@ namespace ChatAppSOLID
 
                 if(IsUsernameValid && IsPasswordValid)
                 {
+                    RequirementBox.Visibility = Visibility.Hidden;
                     requierments.Visibility = Visibility.Hidden;
                     LoginButton.IsEnabled = true;
                 }
@@ -104,6 +137,20 @@ namespace ChatAppSOLID
             var registerWindow = new RegisterWindow();
             registerWindow.Show();
             this.Hide();  // Hide login window
+        }
+
+        public void LoginSuccess(object sender, string username)
+        {
+            var mainWindow = new MainWindow();
+            mainWindow.Show();
+            this.Hide();
+        }
+        public void LoginFailure(object sender, string error)
+        {
+            var connectionError = new ConnectionError
+            {
+                Owner = this
+            };
         }
     }
 }

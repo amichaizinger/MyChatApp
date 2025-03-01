@@ -11,13 +11,13 @@ namespace ChatApp.Server.Models
     {
         public string Name { get; set; }
 
-        public ObservableCollection<Message> Messages { get; private set; } = new ObservableCollection<Message>();  // Uses ObservableCollection for potential data binding (optional, can be IList if avoiding binding).
-        public ObservableCollection<User> Participants { get; private set; } = new ObservableCollection<User>();
+        public ObservableCollection<Message> Messages { get; set; } = new ObservableCollection<Message>();  // Uses ObservableCollection for potential data binding (optional, can be IList if avoiding binding).
+        public ObservableCollection<User>? Participants { get; set; } = new ObservableCollection<User>();
         public int UnreadMessagesCount { get; set; }
 
-        public static Guid _currentUserId; // Store the current user's ID (static for simplicity, could be instance-based)
 
-        public bool IsGroup { get; set; }
+        public Guid? FriendId { get; set; }
+        public Guid? GroupId { get; set; }
 
         public string LatestMessagePreview
         {
@@ -59,55 +59,21 @@ namespace ChatApp.Server.Models
         }
 
 
-        public Chat(string name, bool isGroup)
+        public Chat(string name, Guid? groupId, Guid? friendId, ObservableCollection<User>? members, ObservableCollection<Message> ?messages)
         {
-            Messages = new ObservableCollection<Message>();
-            UnreadMessagesCount = 0;
-            Participants = new ObservableCollection<User>();
+            Messages = messages;
+            Participants = new ObservableCollection<User>(members);
             Name = name;
-            IsGroup = isGroup;
+            GroupId = groupId;
+            FriendId = friendId;
         }
+
         
-        public Chat(string name, bool isGroup, Guid )
+        public Chat()
         {
-            Messages = new ObservableCollection<Message>();
-            UnreadMessagesCount = 0;
-            Participants = new ObservableCollection<User>();
-            Name = name;
-            IsGroup = isGroup;
         }
 
-        public static void SetCurrentUserId(Guid userId)
-        {
-            _currentUserId = userId;
-        }
 
-        public static bool IsMessageSentByCurrentUser(Guid senderId)
-        {
-            return senderId == _currentUserId;
-        }
 
-        public void AddMessage(Message message)
-        {
-
-            Messages.Add(message);
-
-            if (!IsMessageSentByCurrentUser(message.SenderId))
-            {
-                UnreadMessagesCount++;
-            }
-        }
-
-        public void MarkAsRead()
-        {
-            UnreadMessagesCount = 0;
-        }
-        public void AddParticipant(User user)
-        {
-            if (user != null && IsGroup && !Participants.Contains(user))
-            {
-                Participants.Add(user);
-            }
-        }
     }
 }

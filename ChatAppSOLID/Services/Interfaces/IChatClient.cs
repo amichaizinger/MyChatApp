@@ -13,7 +13,7 @@ namespace ChatAppSOLID.Services.Interfaces
     {
         bool IsConnected { get;  set; }
         Socket ClientSocket { get; set; }
-        Task ConnectAsync(IPAddress ipAddress, int port, Guid userId);
+        Task ConnectAsync(IPAddress ipAddress, int port);
         void Disconnect();
 
     }

@@ -30,7 +30,7 @@ namespace ChatAppSOLID.Models
 
         private string _password;
 
-        public string Password
+        public string ?Password
         {
             get => _password;
             set
@@ -44,12 +44,21 @@ namespace ChatAppSOLID.Models
                 _password = value;
             }
         }
-        private bool _isOnline;
-        public bool IsOnline { get => _isOnline; set => _isOnline = value; }
+        private bool ?_isOnline;
+        public bool ?IsOnline { get => _isOnline; set => _isOnline = value; }
         public List<Group> Groups { get; } = new List<Group>();
         public List<Message> Messages { get; set; } = new List<Message>();
 
+        public User(Guid id, string username)
+        {
+            Id = id;
+            UserName = username;
+        }
 
+        public User()
+        {
+            
+        }
 
 
 

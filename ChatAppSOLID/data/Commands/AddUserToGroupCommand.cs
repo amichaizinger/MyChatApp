@@ -10,6 +10,8 @@ using ChatAppSOLID.Services.NewFolder;
 using ChatAppSOLID.Services.Commands.interfaces;
 using System.Net.Sockets;
 using System.Text.Json;
+using System.Diagnostics;
+using System.Reflection.Metadata;
 
 
 namespace ChatAppSOLID.Services.Commands
@@ -19,11 +21,11 @@ namespace ChatAppSOLID.Services.Commands
         private readonly Guid _groupId;
         private readonly Guid _senderId;
         private string content;
-        public List<Guid> Members;
+        public List<User> Members;
 
 
 
-        public AddUserToGroupCommand(Guid groupId, Guid senderId, List<Guid> members)
+        public AddUserToGroupCommand(Guid groupId, Guid senderId, List<User> members)
         {
             _groupId = groupId;
             _senderId = senderId;
@@ -32,18 +34,12 @@ namespace ChatAppSOLID.Services.Commands
 
         public async Task ExecuteAsync(Socket clientSocket)
         {
-             content = " ";
-
-            foreach (var member in Members)
-            {
-                content += member + " ";
-            }
 
             var message = new Message
             {
                 Command = CommandType.AddUserToGroup,
                 SenderId = _senderId,
-                Content = content,
+                Content = JsonSerializer.Serialize(Members),
                 GroupId = _groupId
             };
             try
@@ -57,7 +53,7 @@ namespace ChatAppSOLID.Services.Commands
 
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke(this, ex.Message);
+                Debug.WriteLine("message not sent");
             }
         }
     }

@@ -1,25 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.ObjectModel;
+using ChatAppSOLID.Models;
+using ChatAppSOLID.ViewModels;
 
-namespace ChatAppSOLID.Models
+namespace ChatAppSolid.Models
 {
     public class Chat
     {
+        private readonly MainViewModel _mainViewModel = new MainViewModel();  
         public string Name { get; set; }
 
         public ObservableCollection<Message> Messages { get; private set; } = new ObservableCollection<Message>();  // Uses ObservableCollection for potential data binding (optional, can be IList if avoiding binding).
-        public ObservableCollection<User> Participants { get; private set; } = new ObservableCollection<User>();
+        public ObservableCollection<User> ?Participants { get; private set; } = new ObservableCollection<User>();
         public int UnreadMessagesCount { get; set; }
 
-        public static Guid _currentUserId; // Store the current user's ID (static for simplicity, could be instance-based)
 
-        public bool IsGroup { get; set; }
-
-        public Guid Id { get; set; } 
+        public Guid? FriendId { get; set; }
+        public Guid? GroupId { get; set; }
 
         public string LatestMessagePreview
         {
@@ -61,31 +57,24 @@ namespace ChatAppSOLID.Models
         }
 
 
-        public Chat(string name, bool isGroup)
+        public Chat(string name, Guid ?groupId, Guid ?friendId, ObservableCollection<User> ?members)
         {
             Messages = new ObservableCollection<Message>();
             UnreadMessagesCount = 0;
-            Participants = new ObservableCollection<User>();
+            Participants = new ObservableCollection<User>(members);
             Name = name;
-            IsGroup = isGroup;
+            GroupId = groupId;
+            FriendId = friendId;
         }
 
-        public static void SetCurrentUserId(Guid userId)
-        {
-            _currentUserId = userId;
-        }
 
-        public static bool IsMessageSentByCurrentUser(Guid senderId)
-        {
-            return senderId == _currentUserId;
-        }
 
         public void AddMessage(Message message)
         {
 
             Messages.Add(message);
 
-            if (!IsMessageSentByCurrentUser(message.SenderId))
+            if (message.SenderId != _mainViewModel.UserId)
             {
                 UnreadMessagesCount++;
             }
@@ -97,7 +86,7 @@ namespace ChatAppSOLID.Models
         }
         public void AddParticipant(User user)
         {
-            if (user != null && IsGroup && !Participants.Contains(user))
+            if (user != null && GroupId.HasValue && !Participants.Contains(user))
             {
                 Participants.Add(user);
             }

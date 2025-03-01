@@ -18,7 +18,6 @@ namespace ChatAppSOLID.Services.NewFolder
         public bool IsConnected { get; set; } = false;
         public Socket ClientSocket { get; set; }
         private IPEndPoint _ipEndPoint;
-        private readonly IRecivedMessageHandler _recivedMessageHandler = new RecivedMessageHandler();
 
         public event EventHandler<Message> MessageReceived;
         public event EventHandler<string> ErrorOccurred;
@@ -26,19 +25,21 @@ namespace ChatAppSOLID.Services.NewFolder
 
 
 
-        public async Task ConnectAsync(IPAddress ipAddress, int port, Guid userId)
+        public async Task ConnectAsync(IPAddress ipAddress, int port)
         {
             {
                 _ipEndPoint = new IPEndPoint(ipAddress, port);
+                ClientSocket = new Socket(_ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
                 try
                 {
-                    ClientSocket = new Socket(_ipEndPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                    Debug.WriteLine("Socket created successfully.");
-                    await ClientSocket.ConnectAsync(_ipEndPoint);
-                    IsConnected = true;
+                    if (ClientSocket != null)
+                    {
+                        Debug.WriteLine("Socket created successfully.");
+                        await ClientSocket.ConnectAsync(_ipEndPoint);
+                        IsConnected = true;
+                    }
 
-                    await Task.Run(() => _recivedMessageHandler.RecivedCommandHandlerAsync(ClientSocket));
                 }
                 catch (Exception ex)
                 {
@@ -49,6 +50,22 @@ namespace ChatAppSOLID.Services.NewFolder
 
         public void Disconnect()
         {
+            try
+            {
+                ClientSocket.Shutdown(SocketShutdown.Both);
+                ClientSocket?.Close();
+                ClientSocket?.Dispose();
+                IsConnected = false;
+                ConnectionStatusChanged?.Invoke(this, false);
+            }
+            catch (Exception ex)
+            {
+                ErrorOccurred?.Invoke(this, ex.Message);
+            }
+            finally
+            {
+                ClientSocket.Dispose();
+            }
             ClientSocket.Shutdown(SocketShutdown.Both);
             ConnectionStatusChanged?.Invoke(this, false);
             IsConnected = false;

@@ -7,37 +7,53 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using ChatAppSolid.Models;
 using ChatAppSOLID.Models;
+using ChatAppSOLID.Services.Commands;
 using ChatAppSOLID.Services.NewFolder;
-using Microsoft.Win32;
+using System.Diagnostics;
+using System.Net.Sockets;
 
 namespace ChatAppSOLID.ViewModels
 {
     public class MainViewModel : INotifyPropertyChanged
-    {
-        #region Fields and Properties
 
-        // User Information
+    {
+        public ChatClient chatClient = new ChatClient();
+
+
+        #region Properties
         private string _username;
         public string Username
         {
             get => _username;
-            set { _username = value; OnPropertyChanged(); }
+            set
+            {
+                _username = value;
+                OnPropertyChanged();
+            }
         }
 
         private Guid _userId;
         public Guid UserId
         {
             get => _userId;
-            set { _userId = value; OnPropertyChanged(); }
+            set
+            {
+                _userId = value;
+                OnPropertyChanged();
+            }
         }
 
-        // Chat Management
         private ObservableCollection<Chat> _allChats = new ObservableCollection<Chat>();
         public ObservableCollection<Chat> AllChats
         {
             get => _allChats;
-            set { _allChats = value; OnPropertyChanged(); }
+            set
+            {
+                _allChats = value;
+                OnPropertyChanged();
+            }
         }
 
         private Chat _selectedChat;
@@ -48,28 +64,90 @@ namespace ChatAppSOLID.ViewModels
             {
                 _selectedChat = value;
                 OnPropertyChanged();
-                if (_selectedChat != null)
-                {
-                    _selectedChat.UnreadMessagesCount = 0;
-                }
             }
         }
 
-        // Message Handling
         private string _messageText;
         public string MessageText
         {
             get => _messageText;
-            set { _messageText = value; OnPropertyChanged(); }
+            set
+            {
+                _messageText = value;
+                OnPropertyChanged();
+            }
         }
 
-        // Group Creation
+        private string _groupSearchText;
+        public string GroupSearchText
+        {
+            get => _groupSearchText;
+            set
+            {
+                _groupSearchText = value;
+                OnPropertyChanged();
+                
+            }
+        }
+        private string _errorMessage;
+        public string ErrorMessage
+        {
+            get => _errorMessage;
+            set
+            {
+                _errorMessage = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isErrorPopupOpen;
+        public bool IsErrorPopupOpen
+        {
+            get => _isErrorPopupOpen;
+            set
+            {
+                _isErrorPopupOpen = value;
+                OnPropertyChanged();
+            }
+        }
+
         private bool _isGroupPopupOpen;
         public bool IsGroupPopupOpen
         {
             get => _isGroupPopupOpen;
-            set { _isGroupPopupOpen = value; OnPropertyChanged(); }
+            set
+            {
+                _isGroupPopupOpen = value;
+                OnPropertyChanged();
+            }
         }
+
+        private bool _isAboutPopupOpen;
+        public bool IsAboutPopupOpen
+        {
+            get => _isAboutPopupOpen;
+            set
+            {
+                _isAboutPopupOpen = value;
+                OnPropertyChanged();
+            }
+        }
+
+        private bool _isParticipantsPopupOpen;
+        public bool IsParticipantsPopupOpen
+        {
+            get => _isParticipantsPopupOpen;
+            set
+            {
+                _isParticipantsPopupOpen = value;
+                OnPropertyChanged();
+            }
+        }
+        #endregion
+
+
+
+
 
 
         private ObservableCollection<Models.User> _availableContacts = new ObservableCollection<User>();
@@ -87,35 +165,30 @@ namespace ChatAppSOLID.ViewModels
         }
 
         // Other UI Elements
-        private ObservableCollection<string> _onlineUsers = new ObservableCollection<string>();
-        public ObservableCollection<string> OnlineUsers
+        private ObservableCollection<User> _onlineUsers = new ObservableCollection<User>();
+        public ObservableCollection<User> OnlineUsers
         {
             get => _onlineUsers;
             set { _onlineUsers = value; OnPropertyChanged(); }
         }
 
-        private string _errorMessage;
-        public string ErrorMessage
-        {
-            get => _errorMessage;
-            set { _errorMessage = value; OnPropertyChanged(); }
-        }
 
-        #endregion
 
-        #region Commands
-
-        public ICommand SendMessageCommand { get; }
-        public ICommand CreateGroupCommand { get; }
-        public ICommand CloseGroupPopupCommand { get; }
+        #region Click Commands
+        public ICommand SendCommand { get; }
         public ICommand CreateNewGroupCommand { get; }
         public ICommand AboutDeveloperCommand { get; }
         public ICommand VisitWebsiteCommand { get; }
         public ICommand CloseErrorPopupCommand { get; }
+        public ICommand RefreshOnlineStatusCommand { get; }
         public ICommand AddToGroupCommand { get; }
         public ICommand LeaveGroupCommand { get; }
         public ICommand SeeParticipantsCommand { get; }
-
+        public ICommand CloseGroupPopupCommand { get; }
+        public ICommand OnGroupSearchTextCommand { get; }
+        public ICommand CreateGroupCommand { get; }
+        public ICommand CloseAboutPopupCommand { get; }
+        public ICommand CloseParticipantsPopupCommand { get; }
         #endregion
 
 
@@ -124,80 +197,153 @@ namespace ChatAppSOLID.ViewModels
 
         public MainViewModel()
         {
-            // Initialize Commands
-            SendMessageCommand = new RelayCommand(SendMessage, () => !string.IsNullOrEmpty(MessageText));
-            CreateGroupCommand = new RelayCommand(() => IsGroupPopupOpen = true);
-            CloseGroupPopupCommand = new RelayCommand(() => IsGroupPopupOpen = false);
-            CreateNewGroupCommand = new RelayCommand(CreateNewGroup);
-            AboutDeveloperCommand = new RelayCommand(ShowAboutDeveloper);
+            SendCommand = new RelayCommand(SendMessage, () => !string.IsNullOrEmpty(MessageText));
+            CreateNewGroupCommand = new RelayCommand(OpenGroupPopup);
+            AboutDeveloperCommand = new RelayCommand(OpenAboutPopup);
             VisitWebsiteCommand = new RelayCommand(VisitWebsite);
-            CloseErrorPopupCommand = new RelayCommand(() => ErrorMessage = null);
+            CloseErrorPopupCommand = new RelayCommand(CloseErrorPopup);
+            RefreshOnlineStatusCommand = new RelayCommand(RefreshOnlineStatus);
             AddToGroupCommand = new RelayCommand(AddToGroup);
             LeaveGroupCommand = new RelayCommand(LeaveGroup);
-            SeeParticipantsCommand = new RelayCommand(SeeParticipants);
-
+            SeeParticipantsCommand = new RelayCommand(OpenParticipantsPopup);
+            CloseGroupPopupCommand = new RelayCommand(CloseGroupPopup);
+            OnGroupSearchTextCommand = new RelayCommand(OnGroupSearchText);
+            CreateGroupCommand = new RelayCommand(CreateGroup);
+            CloseAboutPopupCommand = new RelayCommand(CloseAboutPopup);
+            CloseParticipantsPopupCommand = new RelayCommand(CloseParticipantsPopup);
             // Load initial data asynchronously
-            LoadChatsAsync();
-            LoadAvailableContactsAsync();
         }
+
+       
+
+        #region Command Methods
+        private async void SendMessage()
+        {
+            if (SelectedChat != null && !string.IsNullOrEmpty(MessageText))
+            {
+
+                SendMessageCommand sendCommand = new SendMessageCommand(MessageText, UserId, SelectedChat.FriendId, SelectedChat.GroupId);
+                Message message = await sendCommand.ExecuteAsync(chatClient.ClientSocket);
+                if (message != null)
+                {
+                    SelectedChat.Messages.Add(message);
+                    MessageText = string.Empty;
+                }
+                else
+                {
+                    ErrorMessage = "Failed to send message.";
+                }
+            }
+        }
+
+        private void OpenGroupPopup()
+        {
+            IsGroupPopupOpen = true; // Opens the group creation popup
+        }
+
+        private void OpenAboutPopup()
+        {
+            IsAboutPopupOpen = true; // Opens the "About Developer" popup
+        }
+
+        private void VisitWebsite()
+        {
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://example.com") { UseShellExecute = true });
+            // No UI element opened or closed
+        }
+
+        private void CloseErrorPopup()
+        {
+            IsErrorPopupOpen = false; // Closes the error notification popup
+        }
+
+        private void RefreshOnlineStatus()
+        {
+            // Placeholder: Implement logic to refresh online status
+            ErrorMessage = "Refreshing online status... (not implemented)";
+            // No UI element opened or closed
+        }
+
+        private void AddToGroup()
+        {
+            if (SelectedChat != null && SelectedChat.GroupId != null)
+            {
+                // Placeholder: Implement add-to-group logic
+                ErrorMessage = "Add to group not implemented yet.";
+            }
+            // No UI element opened or closed directly
+        }
+
+        private void LeaveGroup()
+        {
+            if (SelectedChat != null && SelectedChat.GroupId != null)
+            {
+                // Placeholder: Implement leave-group logic
+                ErrorMessage = "Leave group not implemented yet.";
+            }
+            // No UI element opened or closed directly
+        }
+
+        private void OpenParticipantsPopup()
+        {
+            if (SelectedChat != null && SelectedChat.GroupId != null)
+            {
+                IsParticipantsPopupOpen = true; // Opens the participants popup
+            }
+        }
+
+        private void CloseGroupPopup()
+        {
+            IsGroupPopupOpen = false; // Closes the group creation popup
+        }
+
+        private void OnGroupSearchText()
+        {
+            throw new NotImplementedException();
+        }
+        private void CreateGroup()
+        {
+            // Placeholder: Implement group creation logic (e.g., send to server)
+            ErrorMessage = "Group created (not fully implemented).";
+            IsGroupPopupOpen = false; // Closes the group creation popup after creation
+        }
+
+        private void CloseAboutPopup()
+        {
+            IsAboutPopupOpen = false; // Closes the "About Developer" popup
+        }
+
+        private void CloseParticipantsPopup()
+        {
+            IsParticipantsPopupOpen = false; // Closes the participants popup
+        }
+        #endregion
+
+
+
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+
+
+
+
+
+
 
 
         #region Methods
 
-        private async void LoadHistoryAsync()
+        public void OnErrorOccurred(string errorMessage)
         {
-            try
-            {
-                var chats = await _recivedMessageHandler.GetChatsAsync(UserId);
-                foreach (var chat in chats)
-                {
-                    AllChats.Add(chat);
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Failed to load chats: {ex.Message}";
-            }
+            ErrorMessage = errorMessage;
+            IsErrorPopupOpen = true;
         }
 
-        private async void LoadAvailableContactsAsync()
-        {
-            try
-            {
-                var contacts = await _recivedMessageHandler.GetContactsAsync(UserId);
-                foreach (var contact in contacts)
-                {
-                    AvailableContacts.Add(contact);
-                }
-            }
-            catch (Exception ex)
-            {
-                ErrorMessage = $"Failed to load contacts: {ex.Message}";
-            }
-        }
 
-        private async void SendMessage()
-        {
-            if (SelectedChat != null && !string.IsNullOrWhiteSpace(MessageText))
-            {
-                try
-                {
-                    var message = new Message
-                    {
-                        Content = MessageText,
-                        SenderId = UserId,
-                        SentAt = DateTime.Now
-                    };
-                    SelectedChat.Messages.Add(message);
-                    await _recivedMessageHandler.SendMessageAsync(SelectedChat.Id, message);
-                    MessageText = string.Empty;
-                }
-                catch (Exception ex)
-                {
-                    ErrorMessage = $"Failed to send message: {ex.Message}";
-                }
-            }
-        }
 
         private async void CreateNewGroup()
         {
@@ -206,9 +352,9 @@ namespace ChatAppSOLID.ViewModels
                 try
                 {
                     var groupName = "New Group"; // You can extend this to prompt the user for a name
-                    var memberIds = SelectedContacts.Select(c => c.Id).ToList();
-                    var newGroup = await _recivedMessageHandler.CreateGroupAsync(groupName, memberIds);
-                    AllChats.Add(newGroup);
+                    List<User> members = SelectedContacts.ToList();
+                    CreateGroupCommand createGroupCommand = new CreateGroupCommand(UserId, groupName, members);
+
                     IsGroupPopupOpen = false;
                     SelectedContacts.Clear();
                 }
@@ -219,54 +365,17 @@ namespace ChatAppSOLID.ViewModels
             }
         }
 
-        private void ShowAboutDeveloper()
-        {
-            // Placeholder: Add logic to display a popup with developer info
-            ErrorMessage = "About Developer: [Your Name], [Your User Info]";
-        }
 
-        private void VisitWebsite()
-        {
-            // Placeholder: Add logic to open a website (e.g., using Process.Start)
-            ErrorMessage = "Website feature not implemented yet.";
-        }
 
-        private void AddToGroup()
-        {
-            // Placeholder: Add logic to add a contact to an existing group
-            if (SelectedChat != null)
-            {
-                ErrorMessage = "Add to group feature not fully implemented.";
-            }
-        }
 
-        private void LeaveGroup()
-        {
-            // Placeholder: Add logic to leave the selected group
-            if (SelectedChat != null)
-            {
-                ErrorMessage = "Leave group feature not fully implemented.";
-            }
-        }
 
-        private void SeeParticipants()
-        {
-            // Placeholder: Add logic to display group participants
-            if (SelectedChat != null)
-            {
-                ErrorMessage = "See participants feature not fully implemented.";
-            }
-        }
-        
         public void OnLoginSuccess(string username, Guid userId)
         {
             Username = username;
             UserId = userId;
-            LoadChatsAsync();
-            LoadAvailableContactsAsync();
         }
 
-        public void OnHistoryReceived(List<Chat> chats)
+        public void OnChatHistoryReceived(List<Chat> chats)
         {
             foreach (var chat in chats)
             {
@@ -274,43 +383,68 @@ namespace ChatAppSOLID.ViewModels
             }
         }
 
-        public void OnGroupCreated(string groupName, List<Guid> members, Guid groupId)
+        public void OnGroupCreated(Group group)
         {
-            var newGroup = new Chat(groupName, true)
-            {
-                Id = groupId,
-                Members = new ObservableCollection<User>(members.Select(m => new User { Id = m, Username = "Unknown User" })),
-                Messages = new ObservableCollection<Message>()
-            };
-            AllChats.Add(newGroup);
+            Chat chat = new Chat(group.Name, group.Id, null, new ObservableCollection<User>(group.Members));
+            AllChats.Add(chat);
         }
         public void OnMessageReceived(Message message)
         {
-            var chat = AllChats.FirstOrDefault(c => c.Id == (message.GroupId.HasValue ? message.GroupId.Value : message.ReciverId)); if (chat != null)
+            if (message.GroupId.HasValue)
             {
-                chat.AddMessage(message);
+                var groapChat = AllChats.FirstOrDefault(c => c.GroupId == message.GroupId);
+
+                if (groapChat != null)
+                {
+                    groapChat.AddMessage(message);
+                }
+            }
+            else if (message.ReciverId.HasValue)
+            {
+                var privateChat = AllChats.FirstOrDefault(c => c.FriendId == message.SenderId || c.FriendId == message.ReciverId);
+
+                if (privateChat != null)
+                {
+                    privateChat.AddMessage(message);
+                }
             }
         }
-        public void OnError(string error)
+
+        public void OnGroupLeft(Guid groupId)
         {
-            ErrorMessage = error;
+            var chat = AllChats.FirstOrDefault(c => c.GroupId == groupId);
+            if (chat != null)
+            {
+                AllChats.Remove(chat);
+            }
         }
 
+        public void OnOnlineUsersReceived(List<User>? onlineUsers)
+        {
+            OnlineUsers.Clear();
+            foreach (var user in onlineUsers)
+            {
+                OnlineUsers.Add(user);
+            }
+        }
+
+        public void OnAddedToGroup(Group group)
+        {
+
+            Chat chat = new Chat(group.Name, group.Id, null, new ObservableCollection<User>(group.Members));
+            AllChats.Add(chat);
+        }
+
+        public void OnNewUserReceived(User user)
+        {
+            Chat chat = new Chat(user.UserName, null, user.Id, null);
+            AllChats.Add(chat);
+        }
 
 
         #endregion
 
-        #region INotifyPropertyChanged Implementation
 
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        #endregion
 
     }
 }
-

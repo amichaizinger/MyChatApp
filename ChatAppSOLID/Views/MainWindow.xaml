@@ -5,12 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatAppSOLID"
         xmlns:vm="clr-namespace:ChatAppSOLID.ViewModels"
+        xmlns:cc="clr-namespace:ChatAppSOLID.Converters"        
         mc:Ignorable="d"
         Title="MainWindow" Height="600" Width="900">
 
-
     <Window.Resources>
-        <!-- Enhanced color brushes (keep all except those specific to color picking, if any) -->
+        <!-- Enhanced color brushes -->
         <SolidColorBrush x:Key="PrimaryColor" Color="#8B5CF6"/>
         <SolidColorBrush x:Key="PrimaryLightColor" Color="#A78BFA"/>
         <SolidColorBrush x:Key="BackgroundColor" Color="#F3F4F6"/>
@@ -205,8 +205,8 @@
             <Setter Property="MaxWidth" Value="400"/>
         </Style>
 
-        <local:SenderIdToStyleConverter x:Key="SenderIdToStyleConverter" />
-        <local:DateTimeToStringConverter x:Key="DateTimeToStringConverter" />
+        <cc:SenderIdToStyleConverter x:Key="SenderIdToStyleConverter"/>
+        <cc:DateTimeToStringConverter x:Key="DateTimeToStringConverter"/>
     </Window.Resources>
 
     <Grid>
@@ -217,24 +217,24 @@
 
         <!-- Error Notification Popup -->
         <Popup x:Name="errorPopup" 
-       PlacementTarget="{Binding ElementName=mainGrid}" 
-       Placement="Center" 
-       AllowsTransparency="True" 
-       PopupAnimation="Fade"
-       IsOpen="{Binding IsErrorPopupOpen}">
+               PlacementTarget="{Binding ElementName=mainGrid}" 
+               Placement="Center" 
+               AllowsTransparency="True" 
+               PopupAnimation="Fade"
+               IsOpen="{Binding IsErrorPopupOpen}">
             <Border Style="{StaticResource NotificationStyle}">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="⚠️" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
                     <TextBlock x:Name="errorMessageText" 
-                       Text="An error occurred. Please try again." 
-                       TextWrapping="Wrap" 
-                       Foreground="White"
-                       VerticalAlignment="Center"/>
+                               Text="An error occurred. Please try again." 
+                               TextWrapping="Wrap" 
+                               Foreground="White"
+                               VerticalAlignment="Center"/>
                     <Button Content="✕" 
-                    Style="{StaticResource IconButtonStyle}" 
-                    Foreground="White" 
-                    Margin="8,0,0,0"
-                    Command="{Binding CloseErrorPopupCommand}"/>
+                            Style="{StaticResource IconButtonStyle}" 
+                            Foreground="White" 
+                            Margin="8,0,0,0"
+                            Command="{Binding CloseErrorPopupCommand}"/>
                 </StackPanel>
             </Border>
         </Popup>
@@ -253,10 +253,9 @@
                     BorderThickness="0,0,0,1">
                 <StackPanel Orientation="Horizontal" 
                           Margin="16,0,0,0">
-                    <!-- Add three-dot menu on the left top with 3 options (removed "Change Background Color") -->
                     <Button x:Name="menuButton" Style="{StaticResource IconButtonStyle}"
-        Content="⋮"
-        FontSize="20">
+                            Content="⋮"
+                            FontSize="20">
                         <Button.ContextMenu>
                             <ContextMenu Style="{StaticResource ContextMenuStyle}">
                                 <MenuItem Header="Create New Group" Command="{Binding CreateNewGroupCommand}" Style="{StaticResource MenuItemStyle}"/>
@@ -272,27 +271,61 @@
             <ScrollViewer x:Name="messagesScrollViewer" Grid.Row="1" 
                      Background="{StaticResource BackgroundColor}">
                 <ItemsControl x:Name="messagesItemsControl" Margin="16"
-                          ItemsSource="{Binding SelectedChat.Messages}">
+              ItemsSource="{Binding SelectedChat.Messages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Background="{Binding SenderId, Converter={StaticResource SenderIdToStyleConverter}, ConverterParameter=Background}"
-                                Margin="0,8"
-                                Padding="12,8"
-                                HorizontalAlignment="{Binding SenderId, Converter={StaticResource SenderIdToStyleConverter}, ConverterParameter=Alignment}"
-                                Width="Auto"
-                                MaxWidth="600"
-                                CornerRadius="8"
-                                BorderBrush="{StaticResource BorderColor}"
-                                BorderThickness="1">
+                            <Border Margin="0,8"
+                    Padding="12,8"
+                    Width="Auto"
+                    MaxWidth="600"
+                    CornerRadius="8"
+                    BorderBrush="{StaticResource BorderColor}"
+                    BorderThickness="1">
+                                <!-- Background styling -->
+                                <Border.Background>
+                                    <MultiBinding Converter="{StaticResource SenderIdToStyleConverter}" 
+                                  ConverterParameter="Background">
+                                        <Binding Path="SenderId"/>
+                                        <Binding Path="DataContext.UserId" 
+                                 RelativeSource="{RelativeSource AncestorType={x:Type ItemsControl}}"/>
+                                    </MultiBinding>
+                                </Border.Background>
+                                <!-- Horizontal alignment -->
+                                <Border.HorizontalAlignment>
+                                    <MultiBinding Converter="{StaticResource SenderIdToStyleConverter}" 
+                                  ConverterParameter="Alignment">
+                                        <Binding Path="SenderId"/>
+                                        <Binding Path="DataContext.UserId" 
+                                 RelativeSource="{RelativeSource AncestorType={x:Type ItemsControl}}"/>
+                                    </MultiBinding>
+                                </Border.HorizontalAlignment>
                                 <StackPanel>
+                                    <!-- Message content -->
                                     <TextBlock Text="{Binding Content}" 
-                                           TextWrapping="Wrap" 
-                                           Foreground="{Binding SenderId, Converter={StaticResource SenderIdToStyleConverter}, ConverterParameter=Foreground}"/>
-                                    <TextBlock Text="{Binding SentAt, Converter={StaticResource DateTimeToStringConverter}, StringFormat=HH:mm}" 
-                                           Foreground="{Binding SenderId, Converter={StaticResource SenderIdToStyleConverter}, ConverterParameter=TimeForeground}"
-                                           Opacity="0.8"
-                                           FontSize="11"
-                                           Margin="0,4,0,0"/>
+                               TextWrapping="Wrap">
+                                        <TextBlock.Foreground>
+                                            <MultiBinding Converter="{StaticResource SenderIdToStyleConverter}" 
+                                          ConverterParameter="Foreground">
+                                                <Binding Path="SenderId"/>
+                                                <Binding Path="DataContext.UserId" 
+                                         RelativeSource="{RelativeSource AncestorType={x:Type ItemsControl}}"/>
+                                            </MultiBinding>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
+                                    <!-- Timestamp -->
+                                    <TextBlock Text="{Binding SentAt, Converter={StaticResource DateTimeToStringConverter}}"
+                               Opacity="0.8"
+                               FontSize="11"
+                               Margin="0,4,0,0">
+                                        <TextBlock.Foreground>
+                                            <MultiBinding Converter="{StaticResource SenderIdToStyleConverter}" 
+                                          ConverterParameter="TimeForeground">
+                                                <Binding Path="SenderId"/>
+                                                <Binding Path="DataContext.UserId" 
+                                         RelativeSource="{RelativeSource AncestorType={x:Type ItemsControl}}"/>
+                                            </MultiBinding>
+                                        </TextBlock.Foreground>
+                                    </TextBlock>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -350,7 +383,8 @@
                             Height="28"
                             Background="#10B981"
                             BorderThickness="0"
-                            Cursor="Hand">
+                            Cursor="Hand"
+                            Command="{Binding RefreshOnlineStatusCommand}">
                         <Button.Template>
                             <ControlTemplate TargetType="Button">
                                 <Border Background="{TemplateBinding Background}"
@@ -375,7 +409,6 @@
                                                 VerticalAlignment="Center"
                                                 Margin="0,0,6,0"/>
 
-                                        <!-- Reload Icon -->
                                         <TextBlock Grid.Column="2"
                                                 Text="↻" 
                                                 Foreground="White"
@@ -389,12 +422,12 @@
                     </Button>
 
                     <TextBlock Grid.Column="1"
-                            Text="בס&quot;ד"
-                            FontFamily="Times New Roman"
-                            FontSize="14"
-                            Margin="16,8"
-                            HorizontalAlignment="Right"
-                            FlowDirection="RightToLeft"/>
+            Text="בס&quot;ד"
+            FontFamily="Times New Roman"
+            FontSize="14"
+            Margin="16,8"
+            HorizontalAlignment="Right"
+            FlowDirection="RightToLeft"/>
                 </Grid>
 
                 <!-- Search Box with TextChanged event for filtering -->
@@ -428,7 +461,6 @@
 
                                     <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="SemiBold"/>
 
-                                    <!-- Updated round message count indicator -->
                                     <Border Grid.Column="1"
                                             Background="{StaticResource PrimaryColor}"
                                             CornerRadius="16"
@@ -442,11 +474,10 @@
                                                    VerticalAlignment="Center"/>
                                     </Border>
 
-                                    <!-- Updated menu with options you requested -->
                                     <Button x:Name="chatMenuButton" Grid.Column="2"
-        Content="⋮"
-        Style="{StaticResource IconButtonStyle}"
-        Margin="4,0,8,0">
+                                            Content="⋮"
+                                            Style="{StaticResource IconButtonStyle}"
+                                            Margin="4,0,8,0">
                                         <Button.ContextMenu>
                                             <ContextMenu Style="{StaticResource ContextMenuStyle}">
                                                 <MenuItem Header="Add To Group" Command="{Binding AddToGroupCommand}" Style="{StaticResource MenuItemStyle}"/>
@@ -456,7 +487,6 @@
                                         </Button.ContextMenu>
                                     </Button>
 
-                                    <!-- Private Chat Avatar - One person icon -->
                                     <Border Grid.Column="3" Width="32" Height="32" Background="#8B5CF6" CornerRadius="16">
                                         <Path Data="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" 
                                               Fill="White" 
@@ -483,17 +513,17 @@
 
         <!-- Group Creation Popup -->
         <Popup x:Name="createGroupPopup" 
-       PlacementTarget="{Binding ElementName=mainGrid}" 
-       Placement="Center" 
-       AllowsTransparency="True" 
-       PopupAnimation="Fade"
-       IsOpen="{Binding IsGroupPopupOpen}">
+               PlacementTarget="{Binding ElementName=mainGrid}" 
+               Placement="Center" 
+               AllowsTransparency="True" 
+               PopupAnimation="Fade"
+               IsOpen="{Binding IsGroupPopupOpen}">
             <Border Background="White" 
-            BorderBrush="{StaticResource BorderColor}" 
-            BorderThickness="1" 
-            CornerRadius="8" 
-            Width="400" 
-            Padding="16">
+                    BorderBrush="{StaticResource BorderColor}" 
+                    BorderThickness="1" 
+                    CornerRadius="8" 
+                    Width="400" 
+                    Padding="16">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -509,29 +539,29 @@
                         </Grid.ColumnDefinitions>
 
                         <TextBlock Text="Create New Group" 
-                           FontWeight="SemiBold" 
-                           FontSize="18"/>
+                                   FontWeight="SemiBold" 
+                                   FontSize="18"/>
 
                         <Button Grid.Column="1" 
-                        Content="✕" 
-                        Style="{StaticResource IconButtonStyle}"
-                        Command="{Binding CloseGroupPopupCommand}"/>
+                                Content="✕" 
+                                Style="{StaticResource IconButtonStyle}"
+                                Command="{Binding CloseGroupPopupCommand}"/>
                     </Grid>
 
                     <TextBox Grid.Row="1" 
-                     Margin="0,16,0,8" 
-                     Style="{StaticResource SearchBoxStyle}"
-                     x:Name="groupSearchBox" 
-                     Text="{Binding GroupSearchText, UpdateSourceTrigger=PropertyChanged}"
-                     Padding="8"/>
+         Margin="0,16,0,8" 
+         Style="{StaticResource SearchBoxStyle}"
+         x:Name="groupSearchBox" 
+         Text="{Binding GroupSearchText, UpdateSourceTrigger=PropertyChanged}"
+         Padding="8"/>
 
                     <ListBox Grid.Row="2" 
-                     x:Name="contactsListBox" 
-                     Height="200" 
-                     Margin="0,8,0,16"
-                     SelectionMode="Multiple"
-                     BorderBrush="{StaticResource BorderColor}"
-                     ItemsSource="{Binding AvailableContacts}">
+                             x:Name="contactsListBox" 
+                             Height="200" 
+                             Margin="0,8,0,16"
+                             SelectionMode="Multiple"
+                             BorderBrush="{StaticResource BorderColor}"
+                             ItemsSource="{Binding AvailableContacts}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Name}" />
@@ -540,29 +570,34 @@
                     </ListBox>
 
                     <Button Grid.Row="3" 
-                    Content="Create Group" 
-                    Background="{StaticResource PrimaryColor}" 
-                    Foreground="White" 
-                    Height="40" 
-                    BorderThickness="0"
-                    Command="{Binding CreateGroupCommand}"/>
+                            Content="Create Group" 
+                            Background="{StaticResource PrimaryColor}" 
+                            Foreground="White" 
+                            Height="40" 
+                            BorderThickness="0"
+                            Command="{Binding CreateGroupCommand}"/>
                 </Grid>
             </Border>
         </Popup>
 
         <!-- About Developer Popup -->
+
+
+
+
         <Popup x:Name="aboutDeveloperPopup" 
-       PlacementTarget="{Binding ElementName=mainGrid}" 
-       Placement="Center" 
-       AllowsTransparency="True" 
-       PopupAnimation="Fade"
-       IsOpen="{Binding IsAboutPopupOpen}">
+               PlacementTarget="{Binding ElementName=mainGrid}" 
+               Placement="Center" 
+               AllowsTransparency="True" 
+               PopupAnimation="Fade"
+               StaysOpen="False"
+               IsOpen="{Binding IsAboutPopupOpen}">
             <Border Background="White" 
-            BorderBrush="{StaticResource BorderColor}" 
-            BorderThickness="1" 
-            CornerRadius="8" 
-            Width="400" 
-            Padding="16">
+                    BorderBrush="{StaticResource BorderColor}" 
+                    BorderThickness="1" 
+                    CornerRadius="8" 
+                    Width="400" 
+                    Padding="16">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -576,21 +611,22 @@
                         </Grid.ColumnDefinitions>
 
                         <TextBlock Text="About Developer" 
-                           FontWeight="SemiBold" 
-                           FontSize="18"/>
+                                   FontWeight="SemiBold" 
+                                   FontSize="18"/>
 
                         <Button Grid.Column="1" 
-                        Content="✕" 
-                        Style="{StaticResource IconButtonStyle}"
-                        Command="{Binding CloseAboutPopupCommand}"/>
+                                Content="✕" 
+                                Style="{StaticResource IconButtonStyle}"
+                                Command="{Binding CloseAboutPopupCommand}"/>
                     </Grid>
 
                     <StackPanel Grid.Row="1" Margin="0,16,0,0">
                         <TextBlock TextWrapping="Wrap" Margin="0,0,0,16">
-                    This chat application was developed by a passionate software engineer with a focus on creating intuitive, beautiful user experiences.
+                            This chat application was developed by a passionate software engineer with a focus on creating intuitive, beautiful user experiences.
                         </TextBlock>
+
                         <TextBlock TextWrapping="Wrap">
-                    Technologies used: WPF, C#, XAML, and a love for creating great software.
+                            Technologies used: WPF, C#, XAML, and a love for creating great software.
                         </TextBlock>
                     </StackPanel>
                 </Grid>
@@ -599,17 +635,17 @@
 
         <!-- Participants Popup -->
         <Popup x:Name="participantsPopup" 
-       PlacementTarget="{Binding ElementName=mainGrid}" 
-       Placement="Center" 
-       AllowsTransparency="True" 
-       PopupAnimation="Fade"
-       IsOpen="{Binding IsParticipantsPopupOpen}">
+               PlacementTarget="{Binding ElementName=mainGrid}" 
+               Placement="Center" 
+               AllowsTransparency="True" 
+               PopupAnimation="Fade"
+               IsOpen="{Binding IsParticipantsPopupOpen}">
             <Border Background="White" 
-            BorderBrush="{StaticResource BorderColor}" 
-            BorderThickness="1" 
-            CornerRadius="8" 
-            Width="400" 
-            Padding="16">
+                    BorderBrush="{StaticResource BorderColor}" 
+                    BorderThickness="1" 
+                    CornerRadius="8" 
+                    Width="400" 
+                    Padding="16">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -623,21 +659,21 @@
                         </Grid.ColumnDefinitions>
 
                         <TextBlock Text="Participants" 
-                           FontWeight="SemiBold" 
-                           FontSize="18"/>
+                                   FontWeight="SemiBold" 
+                                   FontSize="18"/>
 
                         <Button Grid.Column="1" 
-                        Content="✕" 
-                        Style="{StaticResource IconButtonStyle}"
-                        Command="{Binding CloseParticipantsPopupCommand}"/>
+                                Content="✕" 
+                                Style="{StaticResource IconButtonStyle}"
+                                Command="{Binding CloseParticipantsPopupCommand}"/>
                     </Grid>
 
                     <ListBox Grid.Row="1" 
-                     x:Name="participantsListBox" 
-                     Height="200" 
-                     Margin="0,16,0,0"
-                     BorderBrush="{StaticResource BorderColor}"
-                     ItemsSource="{Binding SelectedChat.Participants}">
+                             x:Name="participantsListBox" 
+                             Height="200" 
+                             Margin="0,16,0,0"
+                             BorderBrush="{StaticResource BorderColor}"
+                             ItemsSource="{Binding SelectedChat.Participants}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock Text="{Binding Name}" />

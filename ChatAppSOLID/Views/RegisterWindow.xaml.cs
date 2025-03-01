@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using ChatAppSOLID.Services.Commands;
 using ChatAppSOLID.Services.Interfaces;
+using ChatAppSOLID.Services.NewFolder;
 
 namespace ChatAppSOLID
 {
@@ -20,12 +21,14 @@ namespace ChatAppSOLID
     {
         public bool IsPasswordValid = false;
         public bool IsUsernameValid = false;
-        private readonly IChatClient _chatClient;
+        private readonly ChatClient _chatClient = new ChatClient();
+        private readonly RecivedMessageHandler _recivedMessageHandler = new RecivedMessageHandler();
 
-        public RegisterWindow(IChatClient chatClient)
+        public RegisterWindow()
         {
             InitializeComponent();
-            _chatClient = chatClient;
+            _recivedMessageHandler.RegisterSuccess += RegisterSuccess;
+            _recivedMessageHandler.RegisterFailure += RegisterFailure;   
         }
 
         private void UsernameBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -33,6 +36,9 @@ namespace ChatAppSOLID
             if (UsernameBox.Text.Length < 8)
             {
                 UsernameBox.Background = Brushes.Red;
+                RequirementBox.Visibility = Visibility.Visible;
+                requierments.Visibility = Visibility.Visible;
+                RegisterButton.IsEnabled = false;
             }
             else
             {
@@ -41,16 +47,28 @@ namespace ChatAppSOLID
 
                 if (IsUsernameValid && IsPasswordValid)
                 {
+                    RequirementBox.Visibility = Visibility.Hidden;
                     requierments.Visibility = Visibility.Hidden;
-                    RegisterButton.IsEnabled = true; 
+                    RegisterButton.IsEnabled = true;
+
                 }
             }
         }
 
         private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
         {
+            if (PasswordBox.Password.Length > 0)
+            {
+                passwordPlaceHolder.Visibility = Visibility.Hidden;
+            }
+            else
+            {
+                passwordPlaceHolder.Visibility = Visibility.Visible;
+            }
             if (PasswordBox.Password.Length < 8)
             {
+                RequirementBox.Visibility = Visibility.Visible;
+                requierments.Visibility = Visibility.Visible;
                 PasswordBox.Background = Brushes.Red;
             }
             else
@@ -60,6 +78,7 @@ namespace ChatAppSOLID
 
                 if (IsUsernameValid && IsPasswordValid)
                 {
+                    RequirementBox.Visibility = Visibility.Hidden;
                     requierments.Visibility = Visibility.Hidden;
                     RegisterButton.IsEnabled = true;  
                 }
@@ -103,5 +122,20 @@ namespace ChatAppSOLID
                 RegisterButton_Click(sender, e);
             }
         }
+      
+        public void RegisterSuccess(object sender, string username)
+        {
+            var mainWindow = new MainWindow();
+            mainWindow.Show();
+            this.Hide();
+        }
+        public void RegisterFailure(object sender, string error)
+        {
+            var connectionError = new ConnectionError
+            {
+                Owner = this
+            };
+        }
+
     }
 }

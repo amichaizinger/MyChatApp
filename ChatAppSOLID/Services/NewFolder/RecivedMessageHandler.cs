@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -19,12 +20,17 @@ namespace ChatAppSOLID.Services.NewFolder
 
         private readonly MainViewModel _viewModel = new MainViewModel();
 
+        public event EventHandler<string> LoginSuccess;
+        public event EventHandler<string> LoginFailure;
+        public event EventHandler<string> RegisterSuccess;
+        public event EventHandler<string> RegisterFailure;
+
 
         public async Task RecivedCommandHandlerAsync(Socket clientSocket)
         {
             try
             {
-                while (clientSocket.Connected)
+                while (_viewModel.chatClient.IsConnected)
                 {
                     byte[] buffer = new byte[1024];
                     int bytesReceived = await clientSocket.ReceiveAsync(buffer, SocketFlags.None);
@@ -60,17 +66,26 @@ namespace ChatAppSOLID.Services.NewFolder
                     {
                         await HandleAddedToGroupAsync(message);
                     }
+                    else if (message.Command == CommandType.GetChatHistory)
+                    {
+                        await HandleGetHistoryAsync(message);
+                    }
+                    else if (message.Command == CommandType.GetNewUser) 
+                    {
+                        await HandleGetNewUser(message);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                _viewModel.OnError($"Socket error: {ex.Message}");
+                _viewModel.OnErrorOccurred($"Socket error: {ex.Message}");
             }
             finally
             {
                 clientSocket.Shutdown(SocketShutdown.Both);
             }
         }
+
 
         private async Task HandleLoginAsync(Message message)
         {
@@ -90,7 +105,7 @@ namespace ChatAppSOLID.Services.NewFolder
 
             else
             {
-                LoginFailure?.Invoke(this);
+                LoginFailure?.Invoke(this, "User name or password are incorrect");
             }
 
         }
@@ -115,26 +130,18 @@ namespace ChatAppSOLID.Services.NewFolder
 
                 else
                 {
-                    RegisterFailure?.Invoke(this);
+                    RegisterFailure?.Invoke(this, "User name or password are incorrect");
                 }
 
         }
 
 
-        private async Task HandleGetHistoryAsync(Message message)
+        private async Task HandleGetHistoryAsync(Message message) 
         {
-            List<Message> chats = new List<Message>();
+            List<Chat>?chats = JsonSerializer.Deserialize<List<Chat>>(message.Content);
 
-            var jsonChat = message.Content.Split('|', StringSplitOptions.RemoveEmptyEntries)
-                             .Select(regi => regi.Trim()).Where(regi => !string.IsNullOrEmpty(regi)).ToList();
+            _viewModel.OnChatHistoryReceived(chats);
 
-            foreach (var jsonMessage in jsonMessages)
-            {
-                Message ?historyMessge = JsonSerializer.Deserialize<Message>(jsonMessage);
-                history.Add(historyMessge);
-            }
-
-            _viewModel.OnHistoryReceived(history);
         }
 
         private async Task HandleSendMessageAsync(Message message)
@@ -147,25 +154,14 @@ namespace ChatAppSOLID.Services.NewFolder
         {
             try
             {
-                var group = message.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                              .Select(g => g.Trim()).Where(g => !string.IsNullOrEmpty(g)).ToList();
+                Group group = JsonSerializer.Deserialize<Group>(message.Content);
 
-                string GroupName = group[0];
-                List<Guid> members = group.Skip(1).Select(g => Guid.Parse(g)).ToList();
-                members.Add(message.SenderId);
-
-                Group newGroup = new Group
-                {
-                    Name = GroupName,
-                    Members = members
-                };
-
-                _viewModel.OnGroupCreated(groupName, members);
+                _viewModel.OnGroupCreated(group);
             }
 
             catch (Exception ex)
             {
-                _viewModel.OnError($"Failed to create group: {ex.Message}");
+                _viewModel.OnErrorOccurred($"Failed to create group: {ex.Message}");
             }
         }
 
@@ -177,22 +173,30 @@ namespace ChatAppSOLID.Services.NewFolder
             }
             catch (Exception ex)
             {
-                _viewModel.OnError($"Failed to leave group: {ex.Message}");
+                _viewModel.OnErrorOccurred($"Failed to leave group: {ex.Message}");
             }
         }
 
 
         private async Task HandleGetOnlineUsersAsync(Message message)
         {
-            var online = message.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                              .Select(g => g.Trim()).Where(g => !string.IsNullOrEmpty(g)).ToList();
+            List<User>? online = JsonSerializer.Deserialize<List<User>>(message.Content);
+
 
             _viewModel.OnOnlineUsersReceived(online);
         }
 
         private async Task HandleAddedToGroupAsync(Message message)
         {
-            _viewModel.OnAddedToGroup(message.GroupId); // todo: send who was added so the client will update, for this i sent the full message with the list
+            Group group = JsonSerializer.Deserialize<Group>(message.Content);
+
+            _viewModel.OnAddedToGroup(group); // todo: send who was added so the client will update, for this i sent the full message with the list
+        }
+
+        private async Task HandleGetNewUser(Message message)
+        {
+            User user = JsonSerializer.Deserialize<User>(message.Content);
+            _viewModel.OnNewUserReceived(user);
         }
 
 

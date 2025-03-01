@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatAppSOLID"
         mc:Ignorable="d"
-        Title="RegisterWindow" Height="450" Width="800">
+        Title="RegisterWindow" Height="600" Width="900">
 
     <Grid>
         <!-- Background with gradient -->
@@ -105,7 +105,7 @@
                         <ToolTip Content="Enter your password (minimum 8 characters)"/>
                     </PasswordBox.ToolTip>
                 </PasswordBox>
-                <TextBlock IsHitTestVisible="False"
+                <TextBlock x:Name="passwordPlaceHolder" IsHitTestVisible="False"
                           Text="Password"
                           VerticalAlignment="Center"
                           HorizontalAlignment="Left"
@@ -126,7 +126,7 @@
             </Grid>
 
             <!-- Requirement Text -->
-            <Border Background="#20FFFFFF"
+            <Border x:Name="RequirementBox" Background="#20FFFFFF"
                    CornerRadius="6"
                    Padding="10"
                    Margin="0,0,0,20">

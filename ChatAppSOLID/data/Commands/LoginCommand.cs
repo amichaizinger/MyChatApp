@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
 using System.Text;
@@ -46,7 +47,7 @@ namespace ChatAppSOLID.Services.Commands
 
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke(this, ex.Message);
+                Debug.WriteLine("message not sent");
             }
         }
     }

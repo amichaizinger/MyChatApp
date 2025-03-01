@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Sockets;
+using System.Reflection.Metadata;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -15,10 +17,10 @@ namespace ChatAppSOLID.Services.Commands
     public class CreateGroupCommand : ICommand
     {
         public Guid SenderId { get; }
-        public List<Guid> Members { get; }
+        public List<User> Members { get; }
         public string Name { get; }
 
-        public CreateGroupCommand( Guid senderId, string name, List<Guid> members)
+        public CreateGroupCommand( Guid senderId, string name, List<User> members)
         {
             Members = members;
             Name = name;
@@ -27,16 +29,10 @@ namespace ChatAppSOLID.Services.Commands
 
         public async Task ExecuteAsync(Socket clientSocket)
         {
-            string content = Name + " ";
-
-            foreach (var member in Members)
-            {
-               content += member + " ";
-            }
             Message message = new Message
             {
                 SenderId = SenderId,
-                Content = content,
+                Content =JsonSerializer.Serialize(Members),
                 Command = CommandType.CreateGroup,
                 SentAt = DateTime.Now
             };
@@ -51,7 +47,7 @@ namespace ChatAppSOLID.Services.Commands
 
             catch (Exception ex)
             {
-                ErrorOccurred?.Invoke(this, ex.Message);
+                Debug.WriteLine("message not sent");     
             }
         }
     }
