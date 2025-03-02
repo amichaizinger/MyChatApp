@@ -19,9 +19,10 @@ namespace ChatAppSOLID
     /// </summary>
     public partial class ConnectionError : Window
     {
-        public ConnectionError()
+        public ConnectionError(string error)
         {
             InitializeComponent();
+            ErrorMessage.Text = error;
         }
         private void OkButton_Click(object sender, RoutedEventArgs e)
         {

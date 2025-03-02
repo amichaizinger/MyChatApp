@@ -16,14 +16,8 @@ namespace ChatApp.Server.Services
     {
         private IPEndPoint _endPoint;
         private IPAddress _ipAddress = IPAddress.Any;
-        private Socket _clientSocket;
-        private readonly IClientHandler _clientHandler;
-
-
-        public ChatServer(IClientHandler clientHandler)
-        {
-            _clientHandler = clientHandler;
-        }
+        public Socket clientSocket;
+        
 
         public async Task StartAsync(int port)
         {
@@ -35,9 +29,12 @@ namespace ChatApp.Server.Services
 
             while (true)
             {
-                _clientSocket = await server.AcceptAsync();
+                clientSocket = await server.AcceptAsync();
+                Console.WriteLine("Client connected");
 
-                Task.Run(() => _clientHandler.HandleClientAsync(_clientSocket));
+                ClientHandler _clientHandler = new ClientHandler();
+                Task.Run(() => _clientHandler.HandleClientAsync(clientSocket));
+
             }
         }
 

@@ -15,7 +15,7 @@ namespace ChatAppSOLID.Services.NewFolder
 {
     public class ChatClient : IChatClient
     {
-        public bool IsConnected { get; set; } = false;
+        public bool IsConnected { get; set; } 
         public Socket ClientSocket { get; set; }
         private IPEndPoint _ipEndPoint;
 
@@ -33,17 +33,16 @@ namespace ChatAppSOLID.Services.NewFolder
 
                 try
                 {
-                    if (ClientSocket != null)
-                    {
+
                         Debug.WriteLine("Socket created successfully.");
                         await ClientSocket.ConnectAsync(_ipEndPoint);
                         IsConnected = true;
-                    }
 
                 }
                 catch (Exception ex)
                 {
                     ErrorOccurred?.Invoke(this, ex.Message);
+                    IsConnected = false;
                 }
             }
         }
@@ -66,7 +65,6 @@ namespace ChatAppSOLID.Services.NewFolder
             {
                 ClientSocket.Dispose();
             }
-            ClientSocket.Shutdown(SocketShutdown.Both);
             ConnectionStatusChanged?.Invoke(this, false);
             IsConnected = false;
 

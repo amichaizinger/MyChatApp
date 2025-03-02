@@ -26,7 +26,8 @@ namespace ChatAppSOLID.ViewModels
             remove { CommandManager.RequerySuggested -= value; }
         }
 
-        // Checks if the command can run based on the condition
+        //
+        // s if the command can run based on the condition
         public bool CanExecute(object parameter)
         {
             // If no condition was given, say yes

@@ -53,6 +53,7 @@ namespace ChatAppSOLID.ViewModels
             {
                 _allChats = value;
                 OnPropertyChanged();
+                FilterChats(); // Update FilteredChats when AllChats changes
             }
         }
 
@@ -65,6 +66,13 @@ namespace ChatAppSOLID.ViewModels
                 _selectedChat = value;
                 OnPropertyChanged();
             }
+        }
+
+        private ObservableCollection<Chat> _filteredChats;
+        public ObservableCollection<Chat> FilteredChats
+        {
+            get => _filteredChats;
+            set { _filteredChats = value; OnPropertyChanged(); }
         }
 
         private string _messageText;
@@ -97,6 +105,17 @@ namespace ChatAppSOLID.ViewModels
             {
                 _errorMessage = value;
                 OnPropertyChanged();
+            }
+        }
+        private string _searchText;
+        public string SearchText
+        {
+            get => _searchText;
+            set
+            {
+                _searchText = value;
+                OnPropertyChanged();
+                FilterChats(); // Update FilteredChats when SearchText changes
             }
         }
 
@@ -164,7 +183,6 @@ namespace ChatAppSOLID.ViewModels
             set { _selectedContacts = value; OnPropertyChanged(); }
         }
 
-        // Other UI Elements
         private ObservableCollection<User> _onlineUsers = new ObservableCollection<User>();
         public ObservableCollection<User> OnlineUsers
         {
@@ -191,8 +209,6 @@ namespace ChatAppSOLID.ViewModels
         public ICommand CloseParticipantsPopupCommand { get; }
         #endregion
 
-
-        private readonly RecivedMessageHandler _recivedMessageHandler;
 
 
         public MainViewModel()
@@ -233,6 +249,21 @@ namespace ChatAppSOLID.ViewModels
                 {
                     ErrorMessage = "Failed to send message.";
                 }
+            }
+        }
+
+        private void FilterChats()
+        {
+            if (string.IsNullOrWhiteSpace(SearchText))
+            {
+                FilteredChats = new ObservableCollection<Chat>(AllChats);
+            }
+            else
+            {
+                var filtered = AllChats
+                    .Where(chat => chat.Name?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) == true)
+                    .ToList();
+                FilteredChats = new ObservableCollection<Chat>(filtered);
             }
         }
 

@@ -32,7 +32,8 @@
                 </StackPanel>
 
                 <!-- Error Message -->
-                <TextBlock Text="Unable to connect to the server. Please check your internet connection and try again."
+                <TextBlock x:Name="ErrorMessage"
+                           Text="Could not connect to the server. Please try again later."
                        FontSize="14" 
                        Foreground="#FFE2E8F0"
                        TextWrapping="Wrap"

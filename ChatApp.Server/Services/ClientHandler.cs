@@ -15,6 +15,7 @@ using ChatApp.Server.Services.interfaces;
 using ChatApp.Server.Services.Interfaces;
 using ChatApp.Server.Services.NewFolder;
 using ChatAppSOLID.Services.Commands;
+using ChatAppSOLID.Services.NewFolder;
 using static ChatApp.Server.Models.Message;
 
 
@@ -24,18 +25,11 @@ namespace ChatApp.Server.Services
 
     public class ClientHandler : IClientHandler
     {
-        private readonly IUserService _userService;
-        private readonly IMessageService _messageService;
-        private readonly IGroupService _groupService;
-        private Dictionary<Guid, Socket> clients;
-        private readonly ICommand _addUserToGroupCommand;
+        private readonly IUserService _userService = new UserService();
+        private readonly IMessageService _messageService = new MessageService();
+        private readonly IGroupService _groupService = new GroupService();
+        private Dictionary<Guid, Socket> clients = new Dictionary<Guid, Socket>();
 
-        public ClientHandler(IUserService userService, IMessageService messageService, IGroupService groupService)
-        {
-            _userService = userService;
-            _messageService = messageService;
-            _groupService = groupService;
-        }
 
         public async Task HandleClientAsync(Socket clientSocket)
         {
@@ -120,6 +114,7 @@ namespace ChatApp.Server.Services
         {
             try
             {
+                Console.WriteLine(message.Content);
                 var register = message.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries)
                                .Select(regi => regi.Trim()).Where(regi => !string.IsNullOrEmpty(regi)).ToList();
 

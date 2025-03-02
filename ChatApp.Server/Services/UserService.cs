@@ -6,17 +6,18 @@ using System.Threading.Tasks;
 using ChatApp.Server.Models;
 using ChatApp.Server.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using static ChatApp.Server.Data.Database;
 
 namespace ChatAppSOLID.Services.NewFolder
 {
-    internal class UserService : IUserService
+    public class UserService : IUserService
     {
         private readonly ChatDbContext _db;
 
         public UserService()
         {
-            _db = new ChatDbContext();
+            _db = Program.ServiceProvider.CreateScope().ServiceProvider.GetRequiredService<ChatDbContext>();
         }
 
 

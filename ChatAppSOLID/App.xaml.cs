@@ -11,17 +11,19 @@ namespace ChatAppSOLID
     /// </summary>
     public partial class App : Application
     {
-        private ChatClient _chatClient = new ChatClient();
+        private readonly RecivedMessageHandler _recivedMessageHandler = new RecivedMessageHandler();
+
         private void Application_Startup(object sender, StartupEventArgs e)
         {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
             // Use the correct namespace based on your folder structure
-            var loginwindow = new LoginWindow();
+            var loginwindow = new LoginWindow(_recivedMessageHandler);
             loginwindow.Show();
         }
 
         private void Application_Exit(object sender, ExitEventArgs e)
         {
-            _chatClient.Disconnect();
+            _recivedMessageHandler.mainViewModel.chatClient.Disconnect();
         }
     }
 

@@ -7,6 +7,7 @@
         xmlns:vm="clr-namespace:ChatAppSOLID.ViewModels"
         xmlns:cc="clr-namespace:ChatAppSOLID.Converters"        
         mc:Ignorable="d"
+        WindowStartupLocation="CenterScreen"
         Title="MainWindow" Height="600" Width="900">
 
     <Window.Resources>

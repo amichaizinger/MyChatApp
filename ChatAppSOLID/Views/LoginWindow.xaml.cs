@@ -18,6 +18,7 @@ using ChatAppSOLID.Services.NewFolder;
 using System.Net.Sockets;
 using System.Net;
 using System.Diagnostics;
+using ChatAppSOLID.ViewModels;
 
 
 namespace ChatAppSOLID
@@ -29,26 +30,39 @@ namespace ChatAppSOLID
     {
         public bool IsPasswordValid = false;
         public bool IsUsernameValid = false;
-        private readonly ChatClient _chatClient = new ChatClient();
-        private readonly RecivedMessageHandler _recivedMessageHandler = new RecivedMessageHandler();
-        private readonly IPAddress _ipAddress = IPAddress.Parse("192.168.150.113");
+        private readonly IPAddress _ipAddress = IPAddress.Parse("127.0.0.1");
         private readonly int _port = 8080;
-        public LoginWindow()
+        private readonly RecivedMessageHandler _recivedMessageHandler;
+        public LoginWindow(RecivedMessageHandler recivedMessageHandler)
         {
+            _recivedMessageHandler = recivedMessageHandler;
             InitializeComponent();
+            _recivedMessageHandler.LoginSuccess += LoginSuccess;
+            _recivedMessageHandler.LoginFailure += LoginFailure;
             Task.Run(async () =>
             {
                 try
                 {
-                    await _chatClient.ConnectAsync(_ipAddress, _port);
-                    await Task.Run(() => _recivedMessageHandler.RecivedCommandHandlerAsync(_chatClient.ClientSocket));
+                    await _recivedMessageHandler.mainViewModel.chatClient.ConnectAsync(_ipAddress, _port);
+                    Debug.WriteLine("Connected to server.");
+                    await Task.Run(async () =>
+                    {
+                        try
+                        {
+                            await _recivedMessageHandler.RecivedCommandHandlerAsync(_recivedMessageHandler.mainViewModel.chatClient.ClientSocket);
+                        }
+                        catch (Exception ex)
+                        {
+                            Debug.WriteLine($"Receive loop failed: {ex.Message}");
+                            _recivedMessageHandler.mainViewModel.chatClient.Disconnect(); // Clean up on failure
+                        }
+                    });
                 }
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"Failed to connect to server: {ex.Message}");
                 }
-            }); _recivedMessageHandler.LoginSuccess += LoginSuccess;
-            _recivedMessageHandler.LoginFailure += LoginFailure;
+            }); 
         }
        
         private void UsernameBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -110,10 +124,13 @@ namespace ChatAppSOLID
         {
             string username = UsernameBox.Text.Trim();
             string password = PasswordBox.Password.Trim();
+            PasswordBox.Clear();
+            UsernameBox.Clear();
 
-            if (!_chatClient.IsConnected)
+            if (!_recivedMessageHandler.mainViewModel.chatClient.IsConnected)
             {
-                var errorWindow = new ConnectionError
+                var errorWindow = new ConnectionError("Unable to connect to the server. Please check your internet connection and try again."
+)
                 {
                     Owner = this // Make the popup modal and center it over LoginWindow
                 };
@@ -127,14 +144,14 @@ namespace ChatAppSOLID
 
             // Create and execute the LoginCommand using the socket from IChatClient
             var loginCommand = new LoginCommand(username, password, senderId);
-            await loginCommand.ExecuteAsync(_chatClient.ClientSocket);
+            await loginCommand.ExecuteAsync(_recivedMessageHandler.mainViewModel.chatClient.ClientSocket);
             }
 
         }
 
         private void RegisterLink_Click(object sender, RoutedEventArgs e)
         {
-            var registerWindow = new RegisterWindow();
+            var registerWindow = new RegisterWindow(_recivedMessageHandler);
             registerWindow.Show();
             this.Hide();  // Hide login window
         }
@@ -147,7 +164,7 @@ namespace ChatAppSOLID
         }
         public void LoginFailure(object sender, string error)
         {
-            var connectionError = new ConnectionError
+            var connectionError = new ConnectionError("User name or password are incorrect")
             {
                 Owner = this
             };

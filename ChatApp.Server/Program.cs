@@ -11,29 +11,33 @@ using Microsoft.EntityFrameworkCore;
 
 class Program
 {
+    public static IServiceProvider ServiceProvider { get; private set; }
     static async Task Main(string[] args)
     {
-        // Configure dependency injection for services
+        // Configure dependency injection for ChatDbContext before anything else
         var services = new ServiceCollection();
         services.AddDbContext<ChatDbContext>(options => options.UseSqlite("Data Source=chatapp.db"));
-        services.AddScoped<IUserService, UserService>();
-        services.AddScoped<IMessageService, MessageService>();
-        services.AddScoped<IGroupService, GroupService>();
-        services.AddScoped<IClientHandler, ClientHandler>();
-        services.AddScoped<IChatServer, ChatServer>();
 
-        var provider = services.BuildServiceProvider();
+        ServiceProvider = services.BuildServiceProvider();
 
-        // Create or ensure the database exists and seed initial data
-        using (var scope = provider.CreateScope())
+        // Create or ensure the database exists
+        try
         {
-            var db = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
-            db.Database.EnsureCreated(); // Create database if it doesn’t exist
-
+            using (var scope = ServiceProvider.CreateScope())
+            {
+                var db = scope.ServiceProvider.GetRequiredService<ChatDbContext>();
+                db.Database.EnsureCreated();
+                Console.WriteLine("Database created successfully.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Failed to create database: {ex.Message}");
+            return; // Exit if database creation fails
         }
 
         // Start the chat server on port 8080
-        var server = provider.GetRequiredService<IChatServer>();
-        await server.StartAsync(8080);
+        ChatServer chatServer = new ChatServer();
+        await chatServer.StartAsync(8080);
     }
 }

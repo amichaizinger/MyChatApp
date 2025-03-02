@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using ChatApp.Server.Models;
 using ChatApp.Server.Services.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using static ChatApp.Server.Data.Database;
 
@@ -20,7 +21,7 @@ namespace ChatApp.Server.Services.NewFolder
 
         public MessageService()
         {
-            _db = new ChatDbContext();
+            _db = Program.ServiceProvider.CreateScope().ServiceProvider.GetRequiredService<ChatDbContext>();
         }
         public async Task<bool> SaveMessageAsync(Message message)
         {

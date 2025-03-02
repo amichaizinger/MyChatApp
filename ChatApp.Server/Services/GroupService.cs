@@ -7,6 +7,7 @@ using ChatApp.Server.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using ChatApp.Server.Models;
 using static ChatApp.Server.Data.Database;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace ChatApp.Server.Services.NewFolder
 {
@@ -16,7 +17,7 @@ namespace ChatApp.Server.Services.NewFolder
 
         public GroupService()
         {
-            _db = new ChatDbContext();
+            _db = Program.ServiceProvider.CreateScope().ServiceProvider.GetRequiredService<ChatDbContext>();
         }
         public async Task<bool> AddUserToGroupAsync(Guid groupId, Guid userId)
         {

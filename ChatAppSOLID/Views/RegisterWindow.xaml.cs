@@ -21,14 +21,14 @@ namespace ChatAppSOLID
     {
         public bool IsPasswordValid = false;
         public bool IsUsernameValid = false;
-        private readonly ChatClient _chatClient = new ChatClient();
-        private readonly RecivedMessageHandler _recivedMessageHandler = new RecivedMessageHandler();
+        private readonly RecivedMessageHandler _recivedMessageHandler;
 
-        public RegisterWindow()
+        public RegisterWindow(RecivedMessageHandler recivedMessageHandler)
         {
             InitializeComponent();
+            _recivedMessageHandler = recivedMessageHandler;
             _recivedMessageHandler.RegisterSuccess += RegisterSuccess;
-            _recivedMessageHandler.RegisterFailure += RegisterFailure;   
+            _recivedMessageHandler.RegisterFailure += RegisterFailure; 
         }
 
         private void UsernameBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -89,10 +89,13 @@ namespace ChatAppSOLID
         {
             string username = UsernameBox.Text.Trim();
             string password = PasswordBox.Password.Trim();
+            PasswordBox.Clear();
+            UsernameBox.Clear();
 
-            if (!_chatClient.IsConnected)
+            if (!_recivedMessageHandler.mainViewModel.chatClient.IsConnected)
             {
-                var errorWindow = new ConnectionError
+                var errorWindow = new ConnectionError("Unable to connect to the server. Please check your internet connection and try again."
+)
                 {
                     Owner = this
                 };
@@ -104,13 +107,13 @@ namespace ChatAppSOLID
                 Guid senderId = Guid.Empty;
 
                 var registerCommand = new RegisterCommand(username, password, senderId); 
-                await registerCommand.ExecuteAsync(_chatClient.ClientSocket);
+                await registerCommand.ExecuteAsync(_recivedMessageHandler.mainViewModel.chatClient.ClientSocket);
             }
         }
 
         private void LoginLink_Click(object sender, RoutedEventArgs e)  
         {
-            var loginWindow = new LoginWindow(); 
+            var loginWindow = new LoginWindow(_recivedMessageHandler); 
             loginWindow.Show();
             this.Hide();  // Hide register window
         }
@@ -131,7 +134,7 @@ namespace ChatAppSOLID
         }
         public void RegisterFailure(object sender, string error)
         {
-            var connectionError = new ConnectionError
+            var connectionError = new ConnectionError("User name or password are incorrect")
             {
                 Owner = this
             };
