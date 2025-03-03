@@ -13,6 +13,7 @@ using ChatAppSOLID.Services.Commands;
 using ChatAppSOLID.Services.NewFolder;
 using System.Diagnostics;
 using System.Net.Sockets;
+using System.Windows;
 
 namespace ChatAppSOLID.ViewModels
 {
@@ -334,10 +335,24 @@ namespace ChatAppSOLID.ViewModels
         }
         private void CreateGroup()
         {
-            // Placeholder: Implement group creation logic (e.g., send to server)
-            ErrorMessage = "Group created (not fully implemented).";
-            IsGroupPopupOpen = false; // Closes the group creation popup after creation
+            if (SelectedContacts.Any())
+            {
+                try
+                {
+                    var groupName = "New Group"; // You can extend this to prompt the user for a name
+                    List<User> members = SelectedContacts.ToList();
+                    CreateGroupCommand createGroupCommand = new CreateGroupCommand(UserId, groupName, members);
+
+                    IsGroupPopupOpen = false;
+                    SelectedContacts.Clear();
+                }
+                catch (Exception ex)
+                {
+                    ErrorMessage = $"Failed to create group: {ex.Message}";
+                }
+            }
         }
+
 
         private void CloseAboutPopup()
         {
@@ -370,57 +385,51 @@ namespace ChatAppSOLID.ViewModels
 
         public void OnErrorOccurred(string errorMessage)
         {
-            ErrorMessage = errorMessage;
-            IsErrorPopupOpen = true;
-        }
-
-
-
-        private async void CreateNewGroup()
-        {
-            if (SelectedContacts.Any())
+            Application.Current.Dispatcher.InvokeAsync(() =>
             {
-                try
-                {
-                    var groupName = "New Group"; // You can extend this to prompt the user for a name
-                    List<User> members = SelectedContacts.ToList();
-                    CreateGroupCommand createGroupCommand = new CreateGroupCommand(UserId, groupName, members);
-
-                    IsGroupPopupOpen = false;
-                    SelectedContacts.Clear();
-                }
-                catch (Exception ex)
-                {
-                    ErrorMessage = $"Failed to create group: {ex.Message}";
-                }
-            }
+                ErrorMessage = errorMessage;
+                IsErrorPopupOpen = true;
+            });
         }
-
-
-
 
 
         public void OnLoginSuccess(string username, Guid userId)
         {
-            Username = username;
-            UserId = userId;
+            Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                Username = username;
+                UserId = userId;
+            });
+
         }
 
         public void OnChatHistoryReceived(List<Chat> chats)
         {
-            foreach (var chat in chats)
+            Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                foreach (var chat in chats)
             {
                 AllChats.Add(chat);
             }
+
+            });
+
         }
 
         public void OnGroupCreated(Group group)
         {
-            Chat chat = new Chat(group.Name, group.Id, null, new ObservableCollection<User>(group.Members));
+            Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+                Chat chat = new Chat(group.Name, group.Id, null, new ObservableCollection<User>(group.Members));
             AllChats.Add(chat);
+            });
+
         }
         public void OnMessageReceived(Message message)
         {
+            Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+         
             if (message.GroupId.HasValue)
             {
                 var groapChat = AllChats.FirstOrDefault(c => c.GroupId == message.GroupId);
@@ -438,38 +447,54 @@ namespace ChatAppSOLID.ViewModels
                 {
                     privateChat.AddMessage(message);
                 }
-            }
+            } 
+            });
         }
 
         public void OnGroupLeft(Guid groupId)
         {
+            Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+           
             var chat = AllChats.FirstOrDefault(c => c.GroupId == groupId);
             if (chat != null)
             {
                 AllChats.Remove(chat);
             }
+            });
         }
 
         public void OnOnlineUsersReceived(List<User>? onlineUsers)
         {
+            Application.Current.Dispatcher.InvokeAsync(() =>
+            {
             OnlineUsers.Clear();
             foreach (var user in onlineUsers)
             {
                 OnlineUsers.Add(user);
             }
+            });
+
         }
 
         public void OnAddedToGroup(Group group)
         {
-
+            Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+           
             Chat chat = new Chat(group.Name, group.Id, null, new ObservableCollection<User>(group.Members));
-            AllChats.Add(chat);
+            AllChats.Add(chat); 
+            });
         }
 
         public void OnNewUserReceived(User user)
         {
+            Application.Current.Dispatcher.InvokeAsync(() =>
+            {
+            
             Chat chat = new Chat(user.UserName, null, user.Id, null);
             AllChats.Add(chat);
+            });
         }
 
 

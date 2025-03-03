@@ -158,9 +158,17 @@ namespace ChatAppSOLID
 
         public void LoginSuccess(object sender, string username)
         {
-            var mainWindow = new MainWindow();
+            try
+            {
+  var mainWindow = new MainWindow(_recivedMessageHandler.mainViewModel);
             mainWindow.Show();
             this.Hide();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+            }
+          
         }
         public void LoginFailure(object sender, string error)
         {

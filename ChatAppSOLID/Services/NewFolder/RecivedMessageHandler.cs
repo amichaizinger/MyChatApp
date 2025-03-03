@@ -49,7 +49,7 @@ namespace ChatAppSOLID.Services.NewFolder
                         if (bytesReceived == 0)
                         {
                             mainViewModel.chatClient.IsConnected = false;
-                            mainViewModel.OnErrorOccurred("Server closed the connection.");
+                            LoginFailure?.Invoke(this, "Server closed the connection.");
                             break;
                         }
 
@@ -163,8 +163,8 @@ namespace ChatAppSOLID.Services.NewFolder
                     {
                         if (isCorrect == "success")
                         {
-                            mainViewModel.OnLoginSuccess(username, userId);
                             LoginSuccess?.Invoke(this, username);
+                            mainViewModel.OnLoginSuccess(username, userId);
                         }
                         else
                         {
@@ -204,8 +204,9 @@ namespace ChatAppSOLID.Services.NewFolder
                     {
                         if (isRegistered == "success")
                         {
-                            mainViewModel.OnLoginSuccess(username, userId);
                             RegisterSuccess?.Invoke(this, username);
+                            mainViewModel.OnLoginSuccess(username, userId);
+
                         }
                         else
                         {

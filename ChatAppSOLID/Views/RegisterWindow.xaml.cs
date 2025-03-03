@@ -128,7 +128,7 @@ namespace ChatAppSOLID
       
         public void RegisterSuccess(object sender, string username)
         {
-            var mainWindow = new MainWindow();
+            var mainWindow = new MainWindow(_recivedMessageHandler.mainViewModel);
             mainWindow.Show();
             this.Hide();
         }
