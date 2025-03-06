@@ -5,328 +5,324 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:ChatAppSOLID"
         xmlns:vm="clr-namespace:ChatAppSOLID.ViewModels"
-        xmlns:cc="clr-namespace:ChatAppSOLID.Converters"        
+                xmlns:cc="clr-namespace:ChatAppSOLID.Converters" d:DataContext="{d:DesignInstance Type=vm:MainViewModel}"
         mc:Ignorable="d"
-        WindowStartupLocation="CenterScreen"
-        Title="MainWindow" Height="600" Width="900">
+        Title="Chat App" Height="600" Width="900" 
+        WindowStartupLocation="CenterScreen" Background="#F3F4F6">
 
+
+
+
+
+
+        <!-- Resources for styling and converters -->
     <Window.Resources>
-        <!-- Enhanced color brushes -->
-        <SolidColorBrush x:Key="PrimaryColor" Color="#8B5CF6"/>
-        <SolidColorBrush x:Key="PrimaryLightColor" Color="#A78BFA"/>
-        <SolidColorBrush x:Key="BackgroundColor" Color="#F3F4F6"/>
-        <SolidColorBrush x:Key="BorderColor" Color="#E5E7EB"/>
-        <SolidColorBrush x:Key="TextGrayColor" Color="#6B7280"/>
-        <SolidColorBrush x:Key="DangerColor" Color="#EF4444"/>
-        <SolidColorBrush x:Key="SelectedItemColor" Color="#EDE9FE"/>
+        <cc:SenderIdToStyleConverter x:Key="SenderIdToStyleConverter" />
 
-        <!-- Style for search box with placeholder -->
-        <Style x:Key="SearchBoxStyle" TargetType="TextBox">
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="Padding" Value="32,8,8,8"/>
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="VerticalContentAlignment" Value="Center"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="8">
-                            <Grid>
-                                <TextBlock Text="Type a message..."
-                                         Foreground="{StaticResource TextGrayColor}"
-                                         Padding="{TemplateBinding Padding}"
-                                         VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Text.Length, RelativeSource={RelativeSource TemplatedParent}}" Value="0">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <ScrollViewer x:Name="PART_ContentHost" 
-                                            Margin="{TemplateBinding Padding}"
-                                            VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                            </Grid>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
 
-        <!-- Search box style with different placeholder -->
-        <Style x:Key="ChatSearchBoxStyle" BasedOn="{StaticResource SearchBoxStyle}" TargetType="TextBox">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="TextBox">
-                        <Border Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="8">
-                            <Grid>
-                                <TextBlock Text="Search chats..."
-                                 Foreground="{StaticResource TextGrayColor}"
-                                 Padding="{TemplateBinding Padding}"
-                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
-                                    <TextBlock.Style>
-                                        <Style TargetType="TextBlock">
-                                            <Setter Property="Visibility" Value="Collapsed"/>
-                                            <Style.Triggers>
-                                                <DataTrigger Binding="{Binding Text.Length, RelativeSource={RelativeSource TemplatedParent}}" Value="0">
-                                                    <Setter Property="Visibility" Value="Visible"/>
-                                                </DataTrigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TextBlock.Style>
-                                </TextBlock>
-                                <ScrollViewer x:Name="PART_ContentHost" 
-                                    Margin="{TemplateBinding Padding}"
-                                    VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                            </Grid>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Icon button style -->
-        <Style x:Key="IconButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="32"/>
-            <Setter Property="Height" Value="32"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                CornerRadius="6">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                            VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
+        <!-- Button hover effect -->
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="#8B5CF6" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="10,5" />
             <Style.Triggers>
                 <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F3F4F6"/>
+                    <Setter Property="Background" Value="#7C3AED" />
                 </Trigger>
             </Style.Triggers>
         </Style>
 
-        <!-- Send button style -->
-        <Style x:Key="SendButtonStyle" TargetType="Button">
-            <Setter Property="Width" Value="40"/>
-            <Setter Property="Height" Value="40"/>
-            <Setter Property="Background" Value="{StaticResource PrimaryColor}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="FontSize" Value="20"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                CornerRadius="8">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                            VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource PrimaryLightColor}"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- Context Menu Style -->
-        <Style x:Key="ContextMenuStyle" TargetType="ContextMenu">
-            <Setter Property="Background" Value="White"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="0"/>
-        </Style>
-
-        <Style x:Key="MenuItemStyle" TargetType="MenuItem">
-            <Setter Property="Height" Value="36"/>
-            <Setter Property="Padding" Value="16,8"/>
-            <Setter Property="Background" Value="Transparent"/>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#F3F4F6"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <!-- ListBox Item Style for chat items -->
-        <Style x:Key="ChatListBoxItemStyle" TargetType="ListBoxItem">
-            <Setter Property="Padding" Value="16,12"/>
-            <Setter Property="BorderThickness" Value="0,0,0,1"/>
-            <Setter Property="BorderBrush" Value="{StaticResource BorderColor}"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ListBoxItem">
-                        <Border x:Name="Border"
-                                Background="{TemplateBinding Background}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                Padding="{TemplateBinding Padding}">
-                            <ContentPresenter/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsSelected" Value="true">
-                                <Setter TargetName="Border" Property="Background" Value="{StaticResource SelectedItemColor}"/>
-                            </Trigger>
-                            <Trigger Property="IsMouseOver" Value="true">
-                                <Setter TargetName="Border" Property="Background" Value="#F9FAFB"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <!-- Notification popup style -->
-        <Style x:Key="NotificationStyle" TargetType="Border">
-            <Setter Property="Background" Value="#EF4444"/>
-            <Setter Property="CornerRadius" Value="8"/>
-            <Setter Property="Padding" Value="16,12"/>
-            <Setter Property="HorizontalAlignment" Value="Center"/>
-            <Setter Property="VerticalAlignment" Value="Top"/>
-            <Setter Property="Margin" Value="0,20,0,0"/>
-            <Setter Property="MaxWidth" Value="400"/>
-        </Style>
-
-        <cc:SenderIdToStyleConverter x:Key="SenderIdToStyleConverter"/>
-        <cc:DateTimeToStringConverter x:Key="DateTimeToStringConverter"/>
+        <!-- Converter for visibility of placeholder text -->
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Window.Resources>
 
+    <!-- Main Grid: 2 columns (3:1 ratio) -->
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="3*"/>
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="3*" />
+            <ColumnDefinition Width="1*" />
         </Grid.ColumnDefinitions>
 
-        <!-- Error Notification Popup -->
-        <Popup x:Name="errorPopup" 
-               PlacementTarget="{Binding ElementName=mainGrid}" 
-               Placement="Center" 
-               AllowsTransparency="True" 
-               PopupAnimation="Fade"
-               IsOpen="{Binding IsErrorPopupOpen}">
-            <Border Style="{StaticResource NotificationStyle}">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="⚠️" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
-                    <TextBlock x:Name="errorMessageText" 
-                               Text="An error occurred. Please try again." 
-                               TextWrapping="Wrap" 
-                               Foreground="White"
-                               VerticalAlignment="Center"/>
-                    <Button Content="✕" 
-                            Style="{StaticResource IconButtonStyle}" 
-                            Foreground="White" 
-                            Margin="8,0,0,0"
-                            Command="{Binding CloseErrorPopupCommand}"/>
-                </StackPanel>
-            </Border>
-        </Popup>
-
-        <!-- Main Chat Area -->
-        <Grid Grid.Column="0" Name="mainGrid">
+        <!-- Left Column: Chat Area -->
+        <Grid Grid.Column="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="48"/>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="50" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="70" />
             </Grid.RowDefinitions>
 
             <!-- Top Bar -->
-            <Border x:Name="TopBarBorder" Background="White" 
-                    BorderBrush="{StaticResource BorderColor}" 
-                    BorderThickness="0,0,0,1">
-                <StackPanel Orientation="Horizontal" 
-                          Margin="16,0,0,0">
-                    <Button x:Name="menuButton" Style="{StaticResource IconButtonStyle}"
-                            Content="⋮"
-                            FontSize="20">
-                        <Button.ContextMenu>
-                            <ContextMenu Style="{StaticResource ContextMenuStyle}">
-                                <MenuItem Header="Create New Group" Command="{Binding CreateNewGroupCommand}" Style="{StaticResource MenuItemStyle}"/>
-                                <MenuItem Header="About Developer" Command="{Binding AboutDeveloperCommand}" Style="{StaticResource MenuItemStyle}"/>
-                                <MenuItem Header="Visit Website" Command="{Binding VisitWebsiteCommand}" Style="{StaticResource MenuItemStyle}"/>
-                            </ContextMenu>
-                        </Button.ContextMenu>
-                    </Button>
-                </StackPanel>
-            </Border>
+            <Border Grid.Row="0" Background="White" BorderBrush="#D1D5DB" BorderThickness="0,0,0,1">
+                <Button Content="⋮" HorizontalAlignment="Left" Margin="10,0" x:Name="MenuButton"
+        Command="{Binding OpenMenuCommand}">
+                    <Button.Template>
+                        <ControlTemplate TargetType="Button">
+                            <Border Background="{TemplateBinding Background}" Padding="5">
+                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Border>
+                        </ControlTemplate>
+                    </Button.Template>
+                </Button>
 
+            </Border>
+            <Popup x:Name="MenuPopup" 
+       PlacementTarget="{Binding ElementName=MenuButton}"
+       Placement="Bottom"
+       HorizontalOffset="0"
+       VerticalOffset="5"
+       StaysOpen="False" 
+       IsOpen="{Binding IsMenuOpen}">
+
+                <Border Background="White" BorderBrush="#D1D5DB" BorderThickness="1" CornerRadius="3">
+                    <StackPanel Background="White" HorizontalAlignment="Left" Width="180">
+                        <Button Content="Create New Group" Command="{Binding OpenGroupPopupCommand}" 
+                    Background="White" Foreground="#333333" />
+                        <Button Content="About Developer" Command="{Binding AboutDeveloperCommand}" 
+                    Background="White" Foreground="#333333" />
+                        <Button Content="AMC TO THE MOON 💎🙌🚀" Command="{Binding VisitWebsiteCommand}" 
+                    Background="White" Foreground="#333333" />
+                    </StackPanel>
+                </Border>
+            </Popup>
+
+
+            <!-- Create Group Popup -->
+            <Popup Name="CreateGroupPopup" 
+       Placement="Center" 
+       StaysOpen="False" 
+       IsOpen="{Binding IsGroupPopupOpen}">
+                <Border Background="WhiteSmoke" BorderBrush="Gray" BorderThickness="1" CornerRadius="5">
+                    <Grid Width="450" Height="350" Margin="10">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <!-- Title area -->
+                            <RowDefinition Height="*" />
+                            <!-- Content area -->
+                            <RowDefinition Height="Auto" />
+                            <!-- Button area -->
+                        </Grid.RowDefinitions>
+
+                        <!-- Title area -->
+                        <Grid Grid.Row="0" Margin="0,0,0,10">
+                            <TextBlock x:Name="PopupTitle" 
+                           Text="Create New Group" 
+                           FontSize="16" 
+                           FontWeight="Bold"/>
+                            <!-- Close Button -->
+                            <Button Content="X" 
+                        HorizontalAlignment="Right" 
+                        VerticalAlignment="Top" 
+                        Width="30" 
+                        Height="30" 
+                        Margin="5" 
+                        Background="Red" 
+                        Foreground="White" 
+                        FontWeight="Bold" 
+                        Command="{Binding CloseGroupPopupCommand}"/>
+                        </Grid>
+
+                        <!-- Content area -->
+                        <Grid Grid.Row="1">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- Group Name -->
+                            <TextBlock Grid.Row="0" 
+                           Text="Group Name" 
+                           FontWeight="Bold" 
+                           Margin="0,0,0,5"/>
+
+                            <TextBox Grid.Row="1" 
+                         x:Name="GroupNameTextBox" 
+                         Height="30" 
+                         Margin="0,0,0,15"
+                         Padding="5"
+                         Text="{Binding NewGroupName, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <!-- User Selection -->
+                            <Border Grid.Row="2" 
+                        BorderBrush="#DDDDDD" 
+                        BorderThickness="1">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="*"/>
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" 
+                                   Text="Select Users" 
+                                   FontWeight="Bold" 
+                                   Margin="10,10,0,5"/>
+
+                                    <ListView Grid.Row="1" 
+                                  x:Name="UserListView" 
+                                  ItemsSource="{Binding Users}"
+                                  Margin="5"
+                                  SelectionMode="Multiple">
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Margin="5">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <CheckBox Grid.Column="0" 
+                                                  IsChecked="{Binding IsSelected, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                                  VerticalAlignment="Center" 
+                                                  Margin="0,0,10,0"/>
+
+                                                    <TextBlock Grid.Column="1" 
+                                                   Text="{Binding Username}" 
+                                                   VerticalAlignment="Center"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                </Grid>
+                            </Border>
+                        </Grid>
+
+                        <!-- Button area -->
+                        <StackPanel Grid.Row="2" 
+                        Orientation="Horizontal" 
+                        HorizontalAlignment="Right" 
+                        Margin="0,15,0,0">
+                            <Button x:Name="CancelButton" 
+                        Content="Cancel" 
+                        Width="80" 
+                        Height="30" 
+                        Margin="0,0,10,0"
+                        Command="{Binding CloseGroupPopupCommand}"/>
+                            <Button x:Name="ConfirmButton" 
+                        Content="Create Group" 
+                        Width="100" 
+                        Height="30" 
+                        Background="#4CAF50" 
+                        Foreground="White" 
+                        Command="{Binding ConfirmCreateGroupCommand}"
+                        IsEnabled="{Binding CanCreateGroup}"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Popup>
+
+            <!-- About Developer Popup with Video -->
+            <Popup Name="AboutDeveloperPopup" 
+               Placement="Center" 
+               StaysOpen="False" 
+               IsOpen="{Binding IsAboutPopupOpen}">
+                <Grid Background="Black" Opacity="0.7" Width="450" Height="350">
+                    <!-- Close Button -->
+                    <Button Content="X" 
+                        HorizontalAlignment="Right" 
+                        VerticalAlignment="Top" 
+                        Width="30" 
+                        Height="30" 
+                        Margin="5" 
+                        Background="Red" 
+                        Foreground="White" 
+                        FontWeight="Bold" 
+                        Command="{Binding CloseAboutPopupCommand}"/>
+
+                    <!-- Fireworks Video -->
+                    <MediaElement Name="FireworksMedia" 
+                             Width="Auto"  
+                             Height="Auto" 
+                             Source= "file:///C:\Users\sharo\source\repos\ChatAppSOLID\ChatAppSOLID\Views\AboutMe.mp4"
+                      
+                        Visibility="Visible" 
+                             LoadedBehavior="{Binding MediaState}">
+                    </MediaElement>
+                </Grid>
+            </Popup>
+
+            <TextBlock x:Name="basad" Grid.Column="0"
+                       Grid.Row="0"
+                            Text="בס&quot;ד"
+                            FontFamily="Times New Roman"
+                            FontSize="14"
+                            Margin="16,8"
+                            HorizontalAlignment="Right"
+                            FlowDirection="RightToLeft"/>
+
+            <!-- Error Popup -->
+            <Popup Name="ErrorPopup"
+               IsOpen="{Binding IsErrorPopupOpen}"
+               Placement="Center"
+               AllowsTransparency="True"
+               PopupAnimation="Fade"
+               StaysOpen="False">
+                <Border Background="#F0F0F0"
+                    BorderBrush="Red"
+                    BorderThickness="2"
+                    CornerRadius="5"
+                    Padding="10"
+                    MinWidth="300"
+                    MaxWidth="400">
+                    <StackPanel>
+                        <!-- Error Header -->
+                        <TextBlock Text="Error"
+                              FontSize="16"
+                              FontWeight="Bold"
+                              Foreground="Red"
+                              Margin="0,0,0,10"/>
+
+                        <!-- Error Message -->
+                        <TextBlock Text="{Binding ErrorMessage}"
+                              TextWrapping="Wrap"
+                              FontSize="14"
+                              Margin="0,0,0,20"/>
+
+                        <!-- Close Button -->
+                        <Button Content="Close"
+                           Command="{Binding CloseErrorPopupCommand}"
+                           HorizontalAlignment="Center"
+                           Padding="10,5"
+                           Background="#FF4444"
+                           Foreground="White"
+                           BorderThickness="0"
+                           Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                    CornerRadius="3">
+                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                 VerticalAlignment="Center"/>
+                                                </Border>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#FF6666"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
+                </Border>
+            </Popup>
+            
             <!-- Messages Area -->
-            <ScrollViewer x:Name="messagesScrollViewer" Grid.Row="1" 
-                     Background="{StaticResource BackgroundColor}">
-                <ItemsControl x:Name="messagesItemsControl" Margin="16"
-              ItemsSource="{Binding SelectedChat.Messages}">
+            <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                <ItemsControl ItemsSource="{Binding SelectedChat.Messages}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Border Margin="0,8"
-                    Padding="12,8"
-                    Width="Auto"
-                    MaxWidth="600"
-                    CornerRadius="8"
-                    BorderBrush="{StaticResource BorderColor}"
-                    BorderThickness="1">
-                                <!-- Background styling -->
-                                <Border.Background>
-                                    <MultiBinding Converter="{StaticResource SenderIdToStyleConverter}" 
-                                  ConverterParameter="Background">
-                                        <Binding Path="SenderId"/>
-                                        <Binding Path="DataContext.UserId" 
-                                 RelativeSource="{RelativeSource AncestorType={x:Type ItemsControl}}"/>
-                                    </MultiBinding>
-                                </Border.Background>
-                                <!-- Horizontal alignment -->
-                                <Border.HorizontalAlignment>
-                                    <MultiBinding Converter="{StaticResource SenderIdToStyleConverter}" 
-                                  ConverterParameter="Alignment">
-                                        <Binding Path="SenderId"/>
-                                        <Binding Path="DataContext.UserId" 
-                                 RelativeSource="{RelativeSource AncestorType={x:Type ItemsControl}}"/>
-                                    </MultiBinding>
-                                </Border.HorizontalAlignment>
+                            <!-- Use the converter to apply the appropriate style based on SenderId -->
+                            <Border Margin="10,5" Padding="10" CornerRadius="5"
+                                    Style="{Binding SenderId, Converter={StaticResource SenderIdToStyleConverter}}">
                                 <StackPanel>
-                                    <!-- Message content -->
-                                    <TextBlock Text="{Binding Content}" 
-                               TextWrapping="Wrap">
-                                        <TextBlock.Foreground>
-                                            <MultiBinding Converter="{StaticResource SenderIdToStyleConverter}" 
-                                          ConverterParameter="Foreground">
-                                                <Binding Path="SenderId"/>
-                                                <Binding Path="DataContext.UserId" 
-                                         RelativeSource="{RelativeSource AncestorType={x:Type ItemsControl}}"/>
-                                            </MultiBinding>
-                                        </TextBlock.Foreground>
-                                    </TextBlock>
-                                    <!-- Timestamp -->
-                                    <TextBlock Text="{Binding SentAt, Converter={StaticResource DateTimeToStringConverter}}"
-                               Opacity="0.8"
-                               FontSize="11"
-                               Margin="0,4,0,0">
-                                        <TextBlock.Foreground>
-                                            <MultiBinding Converter="{StaticResource SenderIdToStyleConverter}" 
-                                          ConverterParameter="TimeForeground">
-                                                <Binding Path="SenderId"/>
-                                                <Binding Path="DataContext.UserId" 
-                                         RelativeSource="{RelativeSource AncestorType={x:Type ItemsControl}}"/>
-                                            </MultiBinding>
-                                        </TextBlock.Foreground>
-                                    </TextBlock>
+                                    <TextBlock Text="{Binding Content}" />
+                                    <TextBlock Text="{Binding SentAt, StringFormat={}{0:HH:mm}}" FontSize="10" Opacity="0.7" />
                                 </StackPanel>
                             </Border>
                         </DataTemplate>
@@ -334,355 +330,78 @@
                 </ItemsControl>
             </ScrollViewer>
 
-            <!-- Message Input -->
-            <Border Grid.Row="2" 
-                    Background="White"
-                    BorderBrush="{StaticResource BorderColor}"
-                    BorderThickness="0,1,0,0"
-                    Padding="16">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                    </Grid.ColumnDefinitions>
-
-                    <TextBox x:Name="messageTextBox" Style="{StaticResource SearchBoxStyle}"
-                             Margin="0,0,8,0"
-                             Text="{Binding MessageText, UpdateSourceTrigger=PropertyChanged}"/>
-
-                    <Button x:Name="sendButton" Grid.Column="1"
-                            Style="{StaticResource SendButtonStyle}"
-                            Content="→"
-                            Command="{Binding SendCommand}"/>
-                </Grid>
-            </Border>
+            <!-- Message Input with rounded corners and placeholder -->
+            <Grid Grid.Row="2" Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <!-- Wrap TextBox in a Border for rounded corners -->
+                <Border CornerRadius="5" BorderBrush="#D1D5DB" BorderThickness="1">
+                    <Grid>
+                        <TextBox x:Name="MessageInputBox" Text="{Binding MessageText, UpdateSourceTrigger=PropertyChanged}" 
+                                 VerticalAlignment="Center" Padding="10" BorderThickness="0" />
+                        <!-- Placeholder text overlay -->
+                        <TextBlock Text="Type a message..." Padding="10" Foreground="Gray" 
+                                   Visibility="{Binding Text, ElementName=MessageInputBox, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}" 
+                                   IsHitTestVisible="False" />
+                    </Grid>
+                </Border>
+                <Button Grid.Column="1" Content="→" Margin="10,0,0,0" Command="{Binding SendCommand}" />
+            </Grid>
         </Grid>
 
-        <!-- Right Sidebar -->
-        <Border Grid.Column="1" 
-                Background="White"
-                BorderThickness="1,0,0,0"
-                BorderBrush="{StaticResource BorderColor}">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+        <!-- Right Column: Sidebar -->
+        <Grid Grid.Column="1" Background="#F3F4F6">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="50" />
+                <RowDefinition Height="50" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
 
-                <!-- Hebrew Text בס"ד and Online Status -->
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="*"/>
-                    </Grid.ColumnDefinitions>
-
-                    <Button x:Name="onlineStatusButton" 
-                            Grid.Column="0"
-                            Margin="16,8" 
-                            Padding="8,4"
-                            Height="28"
-                            Background="#10B981"
-                            BorderThickness="0"
-                            Cursor="Hand"
-                            Command="{Binding RefreshOnlineStatusCommand}">
-                        <Button.Template>
-                            <ControlTemplate TargetType="Button">
-                                <Border Background="{TemplateBinding Background}"
-                                        CornerRadius="14">
-                                    <Grid Margin="4,0">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-
-                                        <Ellipse Grid.Column="0" 
-                                                Width="8" 
-                                                Height="8" 
-                                                Fill="White"
-                                                Margin="0,0,6,0"/>
-
-                                        <TextBlock Grid.Column="1" 
-                                                Text="12 Online" 
-                                                Foreground="White"
-                                                FontSize="12"
-                                                VerticalAlignment="Center"
-                                                Margin="0,0,6,0"/>
-
-                                        <TextBlock Grid.Column="2"
-                                                Text="↻" 
-                                                Foreground="White"
-                                                FontSize="14"
-                                                FontWeight="Bold"
-                                                VerticalAlignment="Center"/>
-                                    </Grid>
-                                </Border>
-                            </ControlTemplate>
-                        </Button.Template>
-                    </Button>
-
-                    <TextBlock Grid.Column="1"
-            Text="בס&quot;ד"
-            FontFamily="Times New Roman"
-            FontSize="14"
-            Margin="16,8"
-            HorizontalAlignment="Right"
-            FlowDirection="RightToLeft"/>
-                </Grid>
-
-                <!-- Search Box with TextChanged event for filtering -->
-                <TextBox x:Name="chatSearchBox" Grid.Row="1"
-                         Style="{StaticResource ChatSearchBoxStyle}"
-                         Margin="16,8"
-                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"/>
-
-                <!-- Chat List with selection behavior -->
-                <ListBox x:Name="chatListBox" Grid.Row="2"
-                         BorderThickness="0"
-                         Background="Transparent"
-                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                         ItemsSource="{Binding FilteredChats}"
-                         SelectedItem="{Binding SelectedChat}">
-                    <ListBox.ItemTemplate>
+            <!-- Online Status -->
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10">
+                <Button Content="Online" Background="Green" Command="{Binding RefreshOnlineStatusCommand}">
+                    <Button.ContentTemplate>
                         <DataTemplate>
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="Auto"/>
-                                </Grid.RowDefinitions>
-
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-
-                                    <TextBlock Grid.Column="0" Text="{Binding Name}" FontWeight="SemiBold"/>
-
-                                    <Border Grid.Column="1"
-                                            Background="{StaticResource PrimaryColor}"
-                                            CornerRadius="16"
-                                            Width="24"
-                                            Height="24"
-                                            Margin="8,0">
-                                        <TextBlock Text="{Binding UnreadCount}"
-                                                   Foreground="White"
-                                                   FontSize="12"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
-
-                                    <Button x:Name="chatMenuButton" Grid.Column="2"
-                                            Content="⋮"
-                                            Style="{StaticResource IconButtonStyle}"
-                                            Margin="4,0,8,0">
-                                        <Button.ContextMenu>
-                                            <ContextMenu Style="{StaticResource ContextMenuStyle}">
-                                                <MenuItem Header="Add To Group" Command="{Binding AddToGroupCommand}" Style="{StaticResource MenuItemStyle}"/>
-                                                <MenuItem Header="Leave Group" Command="{Binding LeaveGroupCommand}" Style="{StaticResource MenuItemStyle}"/>
-                                                <MenuItem Header="See Participants" Command="{Binding SeeParticipantsCommand}" Style="{StaticResource MenuItemStyle}"/>
-                                            </ContextMenu>
-                                        </Button.ContextMenu>
-                                    </Button>
-
-                                    <Border Grid.Column="3" Width="32" Height="32" Background="#8B5CF6" CornerRadius="16">
-                                        <Path Data="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" 
-                                              Fill="White" 
-                                              Stretch="Uniform"
-                                              Width="18"
-                                              Height="18"/>
-                                    </Border>
-                                </Grid>
-
-                                <StackPanel Grid.Row="1" Margin="0,4,0,0">
-                                    <TextBlock Text="{Binding LatestMessageTime}" 
-                                               Foreground="{StaticResource TextGrayColor}"
-                                               FontSize="11"/>
-                                    <TextBlock Text="{Binding LatestMessagePreview}" 
-                                               Foreground="{StaticResource TextGrayColor}"
-                                               TextTrimming="CharacterEllipsis"/>
-                                </StackPanel>
-                            </Grid>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding}" />
+                                <TextBlock Text=" ↻" Margin="5,0,0,0" />
+                            </StackPanel>
                         </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-            </Grid>
-        </Border>
+                    </Button.ContentTemplate>
+                </Button>
+            </StackPanel>
 
-        <!-- Group Creation Popup -->
-        <Popup x:Name="createGroupPopup" 
-               PlacementTarget="{Binding ElementName=mainGrid}" 
-               Placement="Center" 
-               AllowsTransparency="True" 
-               PopupAnimation="Fade"
-               IsOpen="{Binding IsGroupPopupOpen}">
-            <Border Background="White" 
-                    BorderBrush="{StaticResource BorderColor}" 
-                    BorderThickness="1" 
-                    CornerRadius="8" 
-                    Width="400" 
-                    Padding="16">
+            <!-- Search Box with rounded corners and placeholder -->
+            <Border Grid.Row="1" Margin="10" CornerRadius="5" BorderBrush="#D1D5DB" BorderThickness="1">
                 <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="Auto"/>
-                    </Grid.RowDefinitions>
-
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Text="Create New Group" 
-                                   FontWeight="SemiBold" 
-                                   FontSize="18"/>
-
-                        <Button Grid.Column="1" 
-                                Content="✕" 
-                                Style="{StaticResource IconButtonStyle}"
-                                Command="{Binding CloseGroupPopupCommand}"/>
-                    </Grid>
-
-                    <TextBox Grid.Row="1" 
-         Margin="0,16,0,8" 
-         Style="{StaticResource SearchBoxStyle}"
-         x:Name="groupSearchBox" 
-         Text="{Binding GroupSearchText, UpdateSourceTrigger=PropertyChanged}"
-         Padding="8"/>
-
-                    <ListBox Grid.Row="2" 
-                             x:Name="contactsListBox" 
-                             Height="200" 
-                             Margin="0,8,0,16"
-                             SelectionMode="Multiple"
-                             BorderBrush="{StaticResource BorderColor}"
-                             ItemsSource="{Binding AvailableContacts}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Name}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-
-                    <Button Grid.Row="3" 
-                            Content="Create Group" 
-                            Background="{StaticResource PrimaryColor}" 
-                            Foreground="White" 
-                            Height="40" 
-                            BorderThickness="0"
-                            Command="{Binding CreateGroupCommand}"/>
+                    <TextBox x:Name="SearchBox" Padding="5" BorderThickness="0"
+                             Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+                    <TextBlock Text="Search chats..." Padding="5" Foreground="Gray" 
+                               Visibility="{Binding Text, ElementName=SearchBox, Converter={StaticResource BooleanToVisibilityConverter}, ConverterParameter=False}" 
+                               IsHitTestVisible="False" />
                 </Grid>
             </Border>
-        </Popup>
 
-        <!-- About Developer Popup -->
-
-
-
-
-        <Popup x:Name="aboutDeveloperPopup" 
-               PlacementTarget="{Binding ElementName=mainGrid}" 
-               Placement="Center" 
-               AllowsTransparency="True" 
-               PopupAnimation="Fade"
-               StaysOpen="False"
-               IsOpen="{Binding IsAboutPopupOpen}">
-            <Border Background="White" 
-                    BorderBrush="{StaticResource BorderColor}" 
-                    BorderThickness="1" 
-                    CornerRadius="8" 
-                    Width="400" 
-                    Padding="16">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Text="About Developer" 
-                                   FontWeight="SemiBold" 
-                                   FontSize="18"/>
-
-                        <Button Grid.Column="1" 
-                                Content="✕" 
-                                Style="{StaticResource IconButtonStyle}"
-                                Command="{Binding CloseAboutPopupCommand}"/>
-                    </Grid>
-
-                    <StackPanel Grid.Row="1" Margin="0,16,0,0">
-                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,16">
-                            This chat application was developed by a passionate software engineer with a focus on creating intuitive, beautiful user experiences.
-                        </TextBlock>
-
-                        <TextBlock TextWrapping="Wrap">
-                            Technologies used: WPF, C#, XAML, and a love for creating great software.
-                        </TextBlock>
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </Popup>
-
-        <!-- Participants Popup -->
-        <Popup x:Name="participantsPopup" 
-               PlacementTarget="{Binding ElementName=mainGrid}" 
-               Placement="Center" 
-               AllowsTransparency="True" 
-               PopupAnimation="Fade"
-               IsOpen="{Binding IsParticipantsPopupOpen}">
-            <Border Background="White" 
-                    BorderBrush="{StaticResource BorderColor}" 
-                    BorderThickness="1" 
-                    CornerRadius="8" 
-                    Width="400" 
-                    Padding="16">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <Grid Grid.Row="0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                        </Grid.ColumnDefinitions>
-
-                        <TextBlock Text="Participants" 
-                                   FontWeight="SemiBold" 
-                                   FontSize="18"/>
-
-                        <Button Grid.Column="1" 
-                                Content="✕" 
-                                Style="{StaticResource IconButtonStyle}"
-                                Command="{Binding CloseParticipantsPopupCommand}"/>
-                    </Grid>
-
-                    <ListBox Grid.Row="1" 
-                             x:Name="participantsListBox" 
-                             Height="200" 
-                             Margin="0,16,0,0"
-                             BorderBrush="{StaticResource BorderColor}"
-                             ItemsSource="{Binding SelectedChat.Participants}">
-                        <ListBox.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding Name}" />
-                            </DataTemplate>
-                        </ListBox.ItemTemplate>
-                    </ListBox>
-                </Grid>
-            </Border>
-        </Popup>
+            <!-- Chat List -->
+            <ListBox Grid.Row="2" ItemsSource="{Binding FilteredChats}" SelectedItem="{Binding SelectedChat}" Margin="10" BorderThickness="0">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Margin="0,5">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                                <TextBlock Text="{Binding LatestMessagePreview}" Opacity="0.7" />
+                                <TextBlock Text="{Binding LatestMessageTime, StringFormat={}{0:HH:mm}}" FontSize="10" />
+                            </StackPanel>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+        </Grid>
     </Grid>
 </Window>

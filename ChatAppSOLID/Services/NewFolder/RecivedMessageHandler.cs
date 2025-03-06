@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
 using ChatAppSolid.Models;
+using ChatAppSolid.Models.ChatAppSolid.Models;
 using ChatAppSOLID.Models;
 using ChatAppSOLID.Services.Commands.interfaces;
 using ChatAppSOLID.Services.Interfaces;
@@ -32,98 +33,81 @@ namespace ChatAppSOLID.Services.NewFolder
         {
             try
             {
-                    while (mainViewModel.chatClient.IsConnected)
+                while (mainViewModel.chatClient.IsConnected)
+                {
+                    // Ensure socket is valid
+                    if (clientSocket == null || !clientSocket.Connected)
                     {
-                        // Ensure socket is valid
-                        if (clientSocket == null || !clientSocket.Connected)
+                        mainViewModel.chatClient.IsConnected = false;
+                        mainViewModel.OnErrorOccurred("Socket is not connected.");
+                        break;
+                    }
+
+                    try
+                    {
+                        string json = await ReadMessageAsync(clientSocket);
+                        Message message = JsonSerializer.Deserialize<Message>(json);
+
+                        if (message.Command == CommandType.Login)
                         {
-                            mainViewModel.chatClient.IsConnected = false;
-                            mainViewModel.OnErrorOccurred("Socket is not connected.");
-                            break;
+                            await HandleLoginAsync(message);
                         }
-
-                        byte[] buffer = new byte[1024];
-                        int bytesReceived = await clientSocket.ReceiveAsync(buffer, SocketFlags.None);
-
-                        // Check for connection closure
-                        if (bytesReceived == 0)
+                        else if (message.Command == CommandType.Register)
                         {
-                            mainViewModel.chatClient.IsConnected = false;
-                            LoginFailure?.Invoke(this, "Server closed the connection.");
-                            break;
+                            await HandleRegisterAsync(message);
                         }
-
-                        try
+                        else if (message.Command == CommandType.SendMessage)
                         {
-                            string json = Encoding.UTF8.GetString(buffer, 0, bytesReceived);
-                            Message message = JsonSerializer.Deserialize<Message>(json);
-
-                            if (message.Command == CommandType.Login)
-                            {
-                                await HandleLoginAsync(message);
-                            }
-                            else if (message.Command == CommandType.Register)
-                            {
-                                await HandleRegisterAsync(message);
-                            }
-                            else if (message.Command == CommandType.SendMessage)
-                            {
-                                await HandleSendMessageAsync(message);
-                            }
-                            else if (message.Command == CommandType.CreateGroup)
-                            {
-                                await HandleCreateGroupAsync(message);
-                            }
-                            else if (message.Command == CommandType.LeaveGroup)
-                            {
-                                await HandleLeaveGroupAsync(message);
-                            }
-                            else if (message.Command == CommandType.GetOnlineUsers)
-                            {
-                                await HandleGetOnlineUsersAsync(message);
-                            }
-                            else if (message.Command == CommandType.AddUserToGroup)
-                            {
-                                await HandleAddedToGroupAsync(message);
-                            }
-                            else if (message.Command == CommandType.GetChatHistory)
-                            {
-                                await HandleGetHistoryAsync(message);
-                            }
-                            else if (message.Command == CommandType.GetNewUser)
-                            {
-                                await HandleGetNewUser(message);
-                            }
-
+                            await HandleSendMessageAsync(message);
                         }
-                        catch (JsonException ex)
+                        else if (message.Command == CommandType.CreateGroup)
                         {
-                            mainViewModel.OnErrorOccurred($"Failed to deserialize message: {ex.Message}");
-                            Debug.WriteLine($"Failed to deserialize message: {ex.Message}");
-                            // Continue the loop to wait for the next message
+                            await HandleCreateGroupAsync(message);
                         }
-                        catch (Exception ex)
+                        else if (message.Command == CommandType.LeaveGroup)
                         {
-                            mainViewModel.OnErrorOccurred($"Error processing message: {ex.Message}");
-                            Debug.WriteLine($"Error processing message: {ex.Message}");
-                            // Continue the loop to wait for the next message
+                            await HandleLeaveGroupAsync(message);
+                        }
+                        else if (message.Command == CommandType.GetOnlineUsers)
+                        {
+                            await HandleGetOnlineUsersAsync(message);
+                        }
+                        else if (message.Command == CommandType.AddUserToGroup)
+                        {
+                            await HandleAddedToGroupAsync(message);
+                        }
+                        else if (message.Command == CommandType.GetChatHistory)
+                        {
+                            await HandleGetHistoryAsync(message);
+                        }
+                        else if (message.Command == CommandType.GetNewUser)
+                        {
+                            await HandleGetNewUser(message);
                         }
                     }
-                
+                    catch (JsonException ex)
+                    {
+                        mainViewModel.OnErrorOccurred($"Failed to deserialize message: {ex.Message}");
+                        Debug.WriteLine($"Failed to deserialize message: {ex.Message}");
+                    }
+                    catch (Exception ex)
+                    {
+                        mainViewModel.OnErrorOccurred($"Error processing message: {ex.Message}");
+                        Debug.WriteLine($"Error processing message: {ex.Message}");
+                    }
+                }
             }
             catch (SocketException ex)
             {
                 mainViewModel.chatClient.IsConnected = false;
                 mainViewModel.OnErrorOccurred($"Socket error: {ex.Message}");
-            Debug.WriteLine($"Socket error: {ex.Message}");
-
+                Debug.WriteLine($"Socket error: {ex.Message}");
             }
             catch (Exception ex)
             {
                 mainViewModel.chatClient.IsConnected = false;
                 mainViewModel.OnErrorOccurred($"Unexpected error in receive loop: {ex.Message}");
                 Debug.WriteLine($"Unexpected error in receive loop: {ex.Message}");
-
             }
             finally
             {
@@ -145,6 +129,38 @@ namespace ChatAppSOLID.Services.NewFolder
             }
         }
 
+        private async Task<string> ReadMessageAsync(Socket socket)
+        {
+            // Read the 4-byte length prefix
+            byte[] lengthBytes = new byte[4];
+            int bytesRead = 0;
+            while (bytesRead < 4)
+            {
+                int received = await socket.ReceiveAsync(lengthBytes.AsMemory(bytesRead, 4 - bytesRead), SocketFlags.None);
+                if (received == 0)
+                {
+                    throw new Exception("Socket closed by server");
+                }
+                bytesRead += received;
+            }
+            int length = BitConverter.ToInt32(lengthBytes, 0);
+
+            // Read the message bytes
+            byte[] messageBytes = new byte[length];
+            bytesRead = 0;
+            while (bytesRead < length)
+            {
+                int received = await socket.ReceiveAsync(messageBytes.AsMemory(bytesRead, length - bytesRead), SocketFlags.None);
+                if (received == 0)
+                {
+                    throw new Exception("Socket closed by server");
+                }
+                bytesRead += received;
+            }
+
+            return Encoding.UTF8.GetString(messageBytes);
+        }
+
 
         private async Task HandleLoginAsync(Message message)
         {
@@ -153,7 +169,7 @@ namespace ChatAppSOLID.Services.NewFolder
 
             string isCorrect = login[0];
             string username = login[1];
-            Guid userId = message.SenderId;
+            string userId = message.SenderId;
 
             try
             {
@@ -194,7 +210,7 @@ namespace ChatAppSOLID.Services.NewFolder
 
             string isRegistered = register[0];
             string username = register[1];
-            Guid userId = message.SenderId;
+            string userId = message.SenderId;
 
             try
             {
@@ -216,10 +232,8 @@ namespace ChatAppSOLID.Services.NewFolder
                     catch (Exception ex)
                     {
                         Debug.WriteLine($"Dispatcher error in HandleLoginAsync: {ex.Message}");
-                        MessageBox.Show($"UI update failed: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
-                }, DispatcherPriority.Background);
-                RegisterSuccess?.Invoke(this, username);
+                });
             }
             catch (Exception ex)
             {
@@ -261,7 +275,7 @@ namespace ChatAppSOLID.Services.NewFolder
         {
             try
             {
-                mainViewModel.OnGroupLeft(message.GroupId.Value);
+                mainViewModel.OnGroupLeft(message.GroupId);
             }
             catch (Exception ex)
             {
@@ -272,17 +286,17 @@ namespace ChatAppSOLID.Services.NewFolder
 
         private async Task HandleGetOnlineUsersAsync(Message message)
         {
-            List<User>? online = JsonSerializer.Deserialize<List<User>>(message.Content);
+            List<string>? onlineId = JsonSerializer.Deserialize<List<string>>(message.Content);
 
 
-            mainViewModel.OnOnlineUsersReceived(online);
+            mainViewModel.OnOnlineUsersReceived(onlineId);
         }
 
         private async Task HandleAddedToGroupAsync(Message message)
         {
-            Group group = JsonSerializer.Deserialize<Group>(message.Content);
+            var usersId = JsonSerializer.Deserialize<List<string>>(message.Content);
 
-            mainViewModel.OnAddedToGroup(group); // todo: send who was added so the client will update, for this i sent the full message with the list
+            mainViewModel.OnAddedToGroup(usersId, message.GroupId); // todo: send who was added so the client will update, for this i sent the full message with the list
         }
 
         private async Task HandleGetNewUser(Message message)

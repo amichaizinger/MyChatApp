@@ -4,91 +4,67 @@ using ChatAppSOLID.ViewModels;
 
 namespace ChatAppSolid.Models
 {
-    public class Chat
+    using System.Collections.ObjectModel;
+    using System.ComponentModel;
+    using ChatAppSOLID.Models;
+    using ChatAppSOLID.ViewModels;
+
+    namespace ChatAppSolid.Models
     {
-        private readonly MainViewModel _mainViewModel = new MainViewModel();  
-        public string Name { get; set; }
-
-        public ObservableCollection<Message> Messages { get; private set; } = new ObservableCollection<Message>();  // Uses ObservableCollection for potential data binding (optional, can be IList if avoiding binding).
-        public ObservableCollection<User> ?Participants { get; private set; } = new ObservableCollection<User>();
-        public int UnreadMessagesCount { get; set; }
-
-
-        public Guid? FriendId { get; set; }
-        public Guid? GroupId { get; set; }
-
-        public string LatestMessagePreview
+        public class Chat 
         {
-            get
+
+            public string Name { get; set; }
+            public ObservableCollection<Message> Messages { get; set; } = new ObservableCollection<Message>(); // Public setter
+            public ObservableCollection<User>? Participants { get; set; } = new ObservableCollection<User>(); // Public setter
+            public int UnreadMessagesCount { get; set; }
+            public User? Friend { get; set; }
+            public string? GroupId { get; set; }
+
+            public string LatestMessagePreview
             {
-                if (Messages == null || !Messages.Any())
+                get
                 {
-                    return string.Empty;
-                }
-                else
-                {
+                    if (Messages == null || !Messages.Any())
+                    {
+                        return string.Empty;
+                    }
                     string latestMessage = Messages.Last().Content;
-                    if (latestMessage.Length > 50)
-                    {
-                        return latestMessage.Substring(0, 50) + "...";
-                    }
-                    else
-                    {
-                        return latestMessage;
-                    }
+                    return latestMessage.Length > 50 ? latestMessage.Substring(0, 50) + "..." : latestMessage;
                 }
             }
-        }
 
-
-        public DateTime LatestMessageTime
-        {
-            get
+            public DateTime LatestMessageTime
             {
-                if (Messages == null || !Messages.Any())
-                {
-                    return DateTime.MinValue;
-                }
-                else
-                {
-                    return Messages.Last().SentAt;
-                }
+                get => Messages == null || !Messages.Any() ? DateTime.MinValue : Messages.Last().SentAt;
             }
-        }
 
+            // Parameterless constructor for deserialization
+            public Chat() { }
 
-        public Chat(string name, Guid ?groupId, Guid ?friendId, ObservableCollection<User> ?members)
-        {
-            Messages = new ObservableCollection<Message>();
-            UnreadMessagesCount = 0;
-            Participants = new ObservableCollection<User>(members);
-            Name = name;
-            GroupId = groupId;
-            FriendId = friendId;
-        }
-
-
-
-        public void AddMessage(Message message)
-        {
-
-            Messages.Add(message);
-
-            if (message.SenderId != _mainViewModel.UserId)
+            // Original constructor for manual instantiation
+            public Chat(string name, string? groupId, User? friend, ObservableCollection<User>? members)
             {
-                UnreadMessagesCount++;
+                Messages = new ObservableCollection<Message>();
+                UnreadMessagesCount = 0;
+                Participants = (members != null ? new ObservableCollection<User>(members) : new ObservableCollection<User>());
+                Name = name;
+                GroupId = groupId;
+                Friend = friend;
             }
-        }
 
-        public void MarkAsRead()
-        {
-            UnreadMessagesCount = 0;
-        }
-        public void AddParticipant(User user)
-        {
-            if (user != null && GroupId.HasValue && !Participants.Contains(user))
+            public void AddMessage(Message message, MainViewModel mainViewModel)
             {
-                Participants.Add(user);
+                Messages.Add(message);
+                if (message.SenderId != mainViewModel.UserId) UnreadMessagesCount++;
+            }
+
+            public void MarkAsRead() => UnreadMessagesCount = 0;
+
+            public void AddParticipant(User user)
+            {
+                if (user != null && !string.IsNullOrEmpty(GroupId) && !Participants.Contains(user))
+                    Participants.Add(user);
             }
         }
     }

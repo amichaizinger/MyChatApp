@@ -36,6 +36,7 @@ class Program
             return; // Exit if database creation fails
         }
 
+
         // Start the chat server on port 8080
         ChatServer chatServer = new ChatServer();
         await chatServer.StartAsync(8080);

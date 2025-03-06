@@ -11,8 +11,8 @@ namespace ChatApp.Server.Services.Interfaces
     {
         Task<User> LoginAsync(string username, string password);
         Task<User> RegisterAsync(string username, string password);
-        Task<bool> UpdateStatusAsync(Guid userId, bool status);
-        Task<User> GetUserByIdAsync(Guid userId);
+        Task<bool> UpdateStatusAsync(string userId, bool status);
+        Task<User> GetUserByIdAsync(string userId);
 
     }
 }

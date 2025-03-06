@@ -101,10 +101,18 @@ namespace ChatAppSOLID
                 };
                 errorWindow.ShowDialog();
             }
+            else if (username.Contains(" ") || password.Contains(" "))
+            {
+                var errorWindow = new ConnectionError("black-spaces are mot allowed")
+                {
+                    Owner = this
+                };
+                errorWindow.ShowDialog();
+            }
             else
             {
                 // Generate a temporary SenderId for registration
-                Guid senderId = Guid.Empty;
+                string senderId = Guid.Empty.ToString();
 
                 var registerCommand = new RegisterCommand(username, password, senderId); 
                 await registerCommand.ExecuteAsync(_recivedMessageHandler.mainViewModel.chatClient.ClientSocket);
@@ -134,7 +142,7 @@ namespace ChatAppSOLID
         }
         public void RegisterFailure(object sender, string error)
         {
-            var connectionError = new ConnectionError("User name or password are incorrect")
+            var connectionError = new ConnectionError("Username is taken go fish")
             {
                 Owner = this
             };

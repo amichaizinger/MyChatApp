@@ -18,6 +18,7 @@ namespace ChatApp.Server.Commands
         public NewUserCommand(User user)
         {
             _user = user;
+            _user.Password = null;
         }
 
 
@@ -28,13 +29,12 @@ namespace ChatApp.Server.Commands
             Message message = new Message
             {
                 Content = JsonSerializer.Serialize(_user),
-                Command = CommandType.CreateGroup,
+                Command = CommandType.GetNewUser,
                 SenderId = _user.Id,
                 SentAt = DateTime.Now,
             };
-            string json = JsonSerializer.Serialize(message);
-            byte[] buffer = Encoding.UTF8.GetBytes(json);
-            await clientSocket.SendAsync(buffer, SocketFlags.None);
+            await SendWithLength.SendMessageAsync(clientSocket, message);
+
         }
     }
 }

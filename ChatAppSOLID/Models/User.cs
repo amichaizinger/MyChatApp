@@ -10,7 +10,7 @@ namespace ChatAppSOLID.Models
     {
 
 
-        public Guid Id { get; } = Guid.NewGuid(); //TODO: maybe enter here the server info
+        public string Id { get; } = Guid.NewGuid().ToString();
         private string _username;
         public string UserName
         {
@@ -44,12 +44,10 @@ namespace ChatAppSOLID.Models
                 _password = value;
             }
         }
-        private bool ?_isOnline;
-        public bool ?IsOnline { get => _isOnline; set => _isOnline = value; }
-        public List<Group> Groups { get; } = new List<Group>();
+           public List<Group> Groups { get; } = new List<Group>();
         public List<Message> Messages { get; set; } = new List<Message>();
 
-        public User(Guid id, string username)
+        public User(string id, string username)
         {
             Id = id;
             UserName = username;

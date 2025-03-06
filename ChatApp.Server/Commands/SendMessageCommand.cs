@@ -9,6 +9,7 @@ using ChatApp.Server.Services.interfaces;
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Diagnostics;
+using ChatApp.Server.Commands;
 
 namespace ChatApp.Server.Services.Commands
 {
@@ -24,9 +25,8 @@ namespace ChatApp.Server.Services.Commands
         {
             try
             {
-                string json = JsonSerializer.Serialize(_message);
-                byte[] buffer = Encoding.UTF8.GetBytes(json);
-                await clientSocket.SendAsync(buffer, SocketFlags.None);
+                await SendWithLength.SendMessageAsync(clientSocket, _message);
+
             }
             catch (Exception ex)
             {

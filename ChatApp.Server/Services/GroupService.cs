@@ -19,30 +19,38 @@ namespace ChatApp.Server.Services.NewFolder
         {
             _db = Program.ServiceProvider.CreateScope().ServiceProvider.GetRequiredService<ChatDbContext>();
         }
-        public async Task<bool> AddUserToGroupAsync(Guid groupId, Guid userId)
+        public async Task<bool> AddUserToGroupAsync(string groupId, string userId)
         {
             _db.Groups.FirstOrDefault(g => g.Id == groupId).Members.Add(_db.Users.FirstOrDefault(u => u.Id == userId));
             await _db.SaveChangesAsync();
             return true;
         }
-        public async Task<bool> RemoveUserFromGroupAsync(Guid groupId, Guid userId)
+        public async Task<bool> RemoveUserFromGroupAsync(string groupId, string userId)
         {
             _db.Groups.FirstOrDefault(g => g.Id == groupId).Members.Remove(_db.Users.FirstOrDefault(u => u.Id == userId));
             await _db.SaveChangesAsync();
             return true;
         }
-        public async Task<bool> CreateGroupAsync(String name, List<Guid>members)
+        public async Task<bool> CreateGroupAsync(String name, List<string> members)
         {
             _db.Groups.Add(new Group{ Name = name, Members = _db.Users.Where(u => members.Contains(u.Id)).ToList() });
             await _db.SaveChangesAsync();
             return true;
         }
-        public async Task<List<Models.Group>> GetUserGroupsAsync(Guid userId)
+
+        public async Task<bool> NewGroupAsync(Group group)
+        {
+            _db.Groups.Add(group);
+            await _db.SaveChangesAsync();
+            return true;
+        }
+ 
+        public async Task<List<Models.Group>> GetUserGroupsAsync(string userId)
         {
             return await _db.Groups.Where(g => g.Members.Any(m => m.Id == userId)).ToListAsync();
         }
 
-        public async Task<List<Models.User>> GetGroupMembersAsync(Guid GroupId)
+        public async Task<List<Models.User>> GetGroupMembersAsync(string GroupId)
         {
             return await _db.Groups.Where(g => g.Id == GroupId).SelectMany(g => g.Members).ToListAsync();
         }

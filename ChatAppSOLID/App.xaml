@@ -5,4 +5,14 @@
 Startup="Application_Startup"
              Exit="Application_Exit">
 
+    <Application.Resources>
+        <Style x:Key="UserMessageStyle" TargetType="Border">
+            <Setter Property="Background" Value="LightBlue" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>
+        <Style x:Key="OtherMessageStyle" TargetType="Border">
+            <Setter Property="Background" Value="LightGray" />
+            <Setter Property="HorizontalAlignment" Value="Left" />
+        </Style>
+    </Application.Resources>
 </Application>

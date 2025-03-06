@@ -8,37 +8,32 @@ using ChatApp.Server.Models;
 using System.Net.Sockets;
 using ChatApp.Server.Services.Commands.interfaces;
 using System.Text.Json;
+using ChatApp.Server.Commands;
 
 namespace ChatApp.Server.Services.Commands
 {
     public class GetOnlineUsersCommand : ICommand
     {
-        private readonly List<Guid> _online;
+        private readonly List<string> _online;
 
 
-        public GetOnlineUsersCommand(List<Guid> online)
+        public GetOnlineUsersCommand(List<string> onlineIds)
         {
-            _online = online;
+            _online = onlineIds;
         }
 
 
 
         public async Task ExecuteAsync(Socket clientSocket)
         { 
-            string content = " ";
 
-            foreach (var on in _online)
-            {
-                content += on + " ";
-            }
             Message message = new Message
             {
-                Content = content,
-                Command = CommandType.CreateGroup,
+                Content = JsonSerializer.Serialize(_online),
+                Command = CommandType.GetOnlineUsers,
             };
-            string json = JsonSerializer.Serialize(message);
-            byte[] buffer = Encoding.UTF8.GetBytes(json);
-            await clientSocket.SendAsync(buffer, SocketFlags.None);
+            await SendWithLength.SendMessageAsync(clientSocket, message);
+
         }
     }
 }

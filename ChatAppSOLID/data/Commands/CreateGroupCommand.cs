@@ -16,11 +16,11 @@ namespace ChatAppSOLID.Services.Commands
 {
     public class CreateGroupCommand : ICommand
     {
-        public Guid SenderId { get; }
+        public string SenderId { get; }
         public List<User> Members { get; }
         public string Name { get; }
 
-        public CreateGroupCommand( Guid senderId, string name, List<User> members)
+        public CreateGroupCommand(string senderId, string name, List<User> members)
         {
             Members = members;
             Name = name;

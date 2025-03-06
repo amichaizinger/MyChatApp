@@ -14,6 +14,10 @@ using ChatAppSOLID.Services.NewFolder;
 using System.Diagnostics;
 using System.Net.Sockets;
 using System.Windows;
+using ChatAppSolid.Models.ChatAppSolid.Models;
+using System.Windows.Controls;
+using System.Text.Json;
+using static ChatAppSOLID.ViewModels.SelectableUser;
 
 namespace ChatAppSOLID.ViewModels
 {
@@ -35,8 +39,8 @@ namespace ChatAppSOLID.ViewModels
             }
         }
 
-        private Guid _userId;
-        public Guid UserId
+        private string _userId;
+        public string UserId
         {
             get => _userId;
             set
@@ -54,7 +58,7 @@ namespace ChatAppSOLID.ViewModels
             {
                 _allChats = value;
                 OnPropertyChanged();
-                FilterChats(); // Update FilteredChats when AllChats changes
+                OnPropertyChanged(nameof(FilterChats)); 
             }
         }
 
@@ -73,7 +77,11 @@ namespace ChatAppSOLID.ViewModels
         public ObservableCollection<Chat> FilteredChats
         {
             get => _filteredChats;
-            set { _filteredChats = value; OnPropertyChanged(); }
+            set
+            {
+                _filteredChats = value;
+                OnPropertyChanged(nameof(FilteredChats)); 
+            }
         }
 
         private string _messageText;
@@ -87,17 +95,7 @@ namespace ChatAppSOLID.ViewModels
             }
         }
 
-        private string _groupSearchText;
-        public string GroupSearchText
-        {
-            get => _groupSearchText;
-            set
-            {
-                _groupSearchText = value;
-                OnPropertyChanged();
-                
-            }
-        }
+       
         private string _errorMessage;
         public string ErrorMessage
         {
@@ -108,6 +106,7 @@ namespace ChatAppSOLID.ViewModels
                 OnPropertyChanged();
             }
         }
+
         private string _searchText;
         public string SearchText
         {
@@ -116,7 +115,7 @@ namespace ChatAppSOLID.ViewModels
             {
                 _searchText = value;
                 OnPropertyChanged();
-                FilterChats(); // Update FilteredChats when SearchText changes
+                OnPropertyChanged(nameof(FilterChats)); // Notify UI that FilteredChats needs to update
             }
         }
 
@@ -131,6 +130,18 @@ namespace ChatAppSOLID.ViewModels
             }
         }
 
+        private bool _isMenuOpen;
+
+        public bool IsMenuOpen
+        {
+            get => _isMenuOpen;
+            set
+            {
+                _isMenuOpen = value;
+                OnPropertyChanged(nameof(IsMenuOpen));
+            }
+        }
+
         private bool _isGroupPopupOpen;
         public bool IsGroupPopupOpen
         {
@@ -142,6 +153,31 @@ namespace ChatAppSOLID.ViewModels
             }
         }
 
+        private string _newGroupName;
+        public string NewGroupName
+        {
+            get => _newGroupName;
+            set
+            {
+                _newGroupName = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public ObservableCollection<SelectableUser>?Users
+        {
+            get => new ObservableCollection<SelectableUser>(
+                   AllChats.Where(chat => chat.Friend != null)
+                          .Select(chat => chat.Friend)
+                          .Select(user => new SelectableUser(user)));
+        }
+
+        private List<SelectableUser> _selectedContacts = new List<SelectableUser>();
+        public List<SelectableUser> SelectedContacts
+        {
+            get => Users?.Where(user => user.IsSelected).ToList() ?? new List<SelectableUser>();
+        }
+
         private bool _isAboutPopupOpen;
         public bool IsAboutPopupOpen
         {
@@ -150,6 +186,21 @@ namespace ChatAppSOLID.ViewModels
             {
                 _isAboutPopupOpen = value;
                 OnPropertyChanged();
+                if (!_isAboutPopupOpen)
+                {
+                    MediaState = MediaState.Stop; // Stop video when popup closes
+                }
+            }
+        }
+
+        private MediaState _mediaState;
+        public MediaState MediaState
+        {
+            get => _mediaState;
+            set
+            {
+                _mediaState = value;
+                OnPropertyChanged(nameof(MediaState));
             }
         }
 
@@ -170,22 +221,9 @@ namespace ChatAppSOLID.ViewModels
 
 
 
-        private ObservableCollection<Models.User> _availableContacts = new ObservableCollection<User>();
-        public ObservableCollection<Models.User> AvailableContacts
-        {
-            get => _availableContacts;
-            set { _availableContacts = value; OnPropertyChanged(); }
-        }
 
-        private ObservableCollection<User> _selectedContacts = new ObservableCollection<User>();
-        public ObservableCollection<User> SelectedContacts
-        {
-            get => _selectedContacts;
-            set { _selectedContacts = value; OnPropertyChanged(); }
-        }
-
-        private ObservableCollection<User> _onlineUsers = new ObservableCollection<User>();
-        public ObservableCollection<User> OnlineUsers
+        private ObservableCollection<string> _onlineUsers = new ObservableCollection<string>();
+        public ObservableCollection<string> OnlineUsers
         {
             get => _onlineUsers;
             set { _onlineUsers = value; OnPropertyChanged(); }
@@ -195,17 +233,17 @@ namespace ChatAppSOLID.ViewModels
 
         #region Click Commands
         public ICommand SendCommand { get; }
-        public ICommand CreateNewGroupCommand { get; }
-        public ICommand AboutDeveloperCommand { get; }
-        public ICommand VisitWebsiteCommand { get; }
         public ICommand CloseErrorPopupCommand { get; }
         public ICommand RefreshOnlineStatusCommand { get; }
         public ICommand AddToGroupCommand { get; }
         public ICommand LeaveGroupCommand { get; }
         public ICommand SeeParticipantsCommand { get; }
         public ICommand CloseGroupPopupCommand { get; }
-        public ICommand OnGroupSearchTextCommand { get; }
-        public ICommand CreateGroupCommand { get; }
+        public ICommand OpenMenuCommand { get; }
+        public ICommand OpenGroupPopupCommand { get; }
+        public ICommand AboutDeveloperCommand { get; }
+        public ICommand VisitWebsiteCommand { get; }
+        public ICommand ConfirmCreateGroupCommand { get; }
         public ICommand CloseAboutPopupCommand { get; }
         public ICommand CloseParticipantsPopupCommand { get; }
         #endregion
@@ -214,24 +252,36 @@ namespace ChatAppSOLID.ViewModels
 
         public MainViewModel()
         {
-            SendCommand = new RelayCommand(SendMessage, () => !string.IsNullOrEmpty(MessageText));
-            CreateNewGroupCommand = new RelayCommand(OpenGroupPopup);
-            AboutDeveloperCommand = new RelayCommand(OpenAboutPopup);
+            FilteredChats = new ObservableCollection<Chat>(AllChats);
+
+            _allChats.Add(new Chat("Best Chat App", null, null, null)); // Private chat
+            _allChats[0].AddMessage(new Message
+            {
+                Content = "Welcome to Best Chat App! 👋 Behold the GREATEST messaging app ever created! Our genius developers have crafted the most AMAZING chat experience known to humankind! You'll be BLOWN AWAY by how smooth and intuitive everything is!",
+                Command = CommandType.SendMessage,
+                SenderId = UserId,
+                SentAt = DateTime.Now,
+            },this);
+
+            SendCommand = new RelayCommand(SendMessage);
+            OpenGroupPopupCommand = new RelayCommand(OpenGroupPopup);
             VisitWebsiteCommand = new RelayCommand(VisitWebsite);
             CloseErrorPopupCommand = new RelayCommand(CloseErrorPopup);
             RefreshOnlineStatusCommand = new RelayCommand(RefreshOnlineStatus);
             AddToGroupCommand = new RelayCommand(AddToGroup);
             LeaveGroupCommand = new RelayCommand(LeaveGroup);
             SeeParticipantsCommand = new RelayCommand(OpenParticipantsPopup);
+
             CloseGroupPopupCommand = new RelayCommand(CloseGroupPopup);
-            OnGroupSearchTextCommand = new RelayCommand(OnGroupSearchText);
-            CreateGroupCommand = new RelayCommand(CreateGroup);
+            OpenMenuCommand = new RelayCommand(OpenMenu);
+            AboutDeveloperCommand = new RelayCommand(OpenAboutPopup);
+            ConfirmCreateGroupCommand = new RelayCommand(CreateGroup);
             CloseAboutPopupCommand = new RelayCommand(CloseAboutPopup);
             CloseParticipantsPopupCommand = new RelayCommand(CloseParticipantsPopup);
             // Load initial data asynchronously
         }
 
-       
+
 
         #region Command Methods
         private async void SendMessage()
@@ -239,17 +289,18 @@ namespace ChatAppSOLID.ViewModels
             if (SelectedChat != null && !string.IsNullOrEmpty(MessageText))
             {
 
-                SendMessageCommand sendCommand = new SendMessageCommand(MessageText, UserId, SelectedChat.FriendId, SelectedChat.GroupId);
-                Message message = await sendCommand.ExecuteAsync(chatClient.ClientSocket);
-                if (message != null)
+                SendMessageCommand sendCommand = new SendMessageCommand(MessageText, UserId, SelectedChat.Friend.Id, SelectedChat.GroupId);
+                try
                 {
+                    Message message = await sendCommand.ExecuteAsync(chatClient.ClientSocket);
                     SelectedChat.Messages.Add(message);
                     MessageText = string.Empty;
                 }
-                else
+                catch (Exception ex)
                 {
-                    ErrorMessage = "Failed to send message.";
+                    OnErrorOccurred("Failed to send message.");
                 }
+
             }
         }
 
@@ -275,13 +326,13 @@ namespace ChatAppSOLID.ViewModels
 
         private void OpenAboutPopup()
         {
-            IsAboutPopupOpen = true; // Opens the "About Developer" popup
+            IsAboutPopupOpen = true;
+            MediaState = MediaState.Play; // Start video when popup opens
         }
 
         private void VisitWebsite()
         {
-            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://example.com") { UseShellExecute = true });
-            // No UI element opened or closed
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("https://www.amazon.com/-/he/%D7%94%D7%99%D7%A8%D7%97-%D7%9E%D7%A0%D7%99%D7%95%D7%AA-%D7%97%D7%95%D7%9C%D7%A6%D7%AA-%D7%98%D7%A8%D7%99%D7%A7%D7%95-%D7%A9%D7%97%D7%95%D7%A8/dp/B08VG8QPV6/ref=sr_1_1?crid=KUKZTSALDYPQ&dib=eyJ2IjoiMSJ9.Lam5DsLPJeC2hGHqdzTCKzRKdSbcYdCbU4wxeRkRUJ98uyYgvoPIOM8WRtPloPY_A1FCcSO1TaA4Ry48Oc_P4vs0-rRhxBK98tyD20cJ2nB57MOfHj5ab7WkPekJ8G_f8q4WeSy2MBIF2D9NZz7IwZLhwwe61n3g2rUiNHrmFSX1IuHT5FTJ3US88mNhbNShU-AiJYKNZgbk0iTcvC1sqqS_YVRvq1vaHeeRYsXgBoA.qM7mO1j9JrG3EouPr_-GkNC7rvGCP53A8ofUq9x-iFI&dib_tag=se&keywords=amc+to+the+moon&qid=1741124849&sprefix=amc+to+the+moon%2Caps%2C221&sr=8-1") { UseShellExecute = true });
         }
 
         private void CloseErrorPopup()
@@ -326,12 +377,13 @@ namespace ChatAppSOLID.ViewModels
 
         private void CloseGroupPopup()
         {
-            IsGroupPopupOpen = false; // Closes the group creation popup
+            IsGroupPopupOpen = false; 
+            SelectedContacts.Clear();
         }
 
-        private void OnGroupSearchText()
+        private void OpenMenu()
         {
-            throw new NotImplementedException();
+            IsMenuOpen = true; 
         }
         private void CreateGroup()
         {
@@ -339,8 +391,8 @@ namespace ChatAppSOLID.ViewModels
             {
                 try
                 {
-                    var groupName = "New Group"; // You can extend this to prompt the user for a name
-                    List<User> members = SelectedContacts.ToList();
+                    var groupName = NewGroupName; // You can extend this to prompt the user for a name
+                    List<User> members = SelectedContacts.Where(su => su.IsSelected).Select(su => su.User).ToList();
                     CreateGroupCommand createGroupCommand = new CreateGroupCommand(UserId, groupName, members);
 
                     IsGroupPopupOpen = false;
@@ -349,6 +401,21 @@ namespace ChatAppSOLID.ViewModels
                 catch (Exception ex)
                 {
                     ErrorMessage = $"Failed to create group: {ex.Message}";
+                }
+            }
+        }
+
+        public bool CanCreateGroup
+        {
+            get
+            {
+                if (SelectedContacts.Any() && !string.IsNullOrEmpty(NewGroupName))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
                 }
             }
         }
@@ -393,13 +460,20 @@ namespace ChatAppSOLID.ViewModels
         }
 
 
-        public void OnLoginSuccess(string username, Guid userId)
+        public void OnLoginSuccess(string username, string userId)
         {
-            Application.Current.Dispatcher.InvokeAsync(() =>
+            try
             {
-                Username = username;
-                UserId = userId;
-            });
+                Application.Current.Dispatcher.InvokeAsync(() =>
+                {
+                    Username = username;
+                    UserId = userId;
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex);
+            }
 
         }
 
@@ -410,7 +484,8 @@ namespace ChatAppSOLID.ViewModels
                 foreach (var chat in chats)
             {
                 AllChats.Add(chat);
-            }
+                    FilteredChats.Add(chat);
+                }
 
             });
 
@@ -430,28 +505,29 @@ namespace ChatAppSOLID.ViewModels
             Application.Current.Dispatcher.InvokeAsync(() =>
             {
          
-            if (message.GroupId.HasValue)
+            if (!string.IsNullOrEmpty(message.GroupId))
             {
                 var groapChat = AllChats.FirstOrDefault(c => c.GroupId == message.GroupId);
 
                 if (groapChat != null)
                 {
-                    groapChat.AddMessage(message);
+                    groapChat.AddMessage(message, this);
                 }
             }
-            else if (message.ReciverId.HasValue)
+            else if (!string.IsNullOrEmpty(message.ReciverId))
             {
-                var privateChat = AllChats.FirstOrDefault(c => c.FriendId == message.SenderId || c.FriendId == message.ReciverId);
+                var privateChat = AllChats.FirstOrDefault(c => c.Friend.Id == message.SenderId || c.Friend.Id == message.ReciverId);
 
                 if (privateChat != null)
                 {
-                    privateChat.AddMessage(message);
+                    privateChat.AddMessage(message, this);
+    
                 }
             } 
             });
         }
 
-        public void OnGroupLeft(Guid groupId)
+        public void OnGroupLeft(string groupId)
         {
             Application.Current.Dispatcher.InvokeAsync(() =>
             {
@@ -464,7 +540,7 @@ namespace ChatAppSOLID.ViewModels
             });
         }
 
-        public void OnOnlineUsersReceived(List<User>? onlineUsers)
+        public void OnOnlineUsersReceived(List<string>? onlineUsers)
         {
             Application.Current.Dispatcher.InvokeAsync(() =>
             {
@@ -477,13 +553,19 @@ namespace ChatAppSOLID.ViewModels
 
         }
 
-        public void OnAddedToGroup(Group group)
+        public void OnAddedToGroup(List<string>usersId, string groupId)
         {
             Application.Current.Dispatcher.InvokeAsync(() =>
             {
-           
-            Chat chat = new Chat(group.Name, group.Id, null, new ObservableCollection<User>(group.Members));
-            AllChats.Add(chat); 
+           var chat = AllChats.FirstOrDefault(c => c.GroupId == groupId);
+                if (chat != null)
+                {
+                    foreach (var user in usersId)
+                    {
+                        var addedUser = AllChats.Where(chat => chat.Friend != null).FirstOrDefault(c => c.Friend.Id == user);
+                        chat.AddParticipant(addedUser.Friend);
+                    }
+                }
             });
         }
 
@@ -492,7 +574,7 @@ namespace ChatAppSOLID.ViewModels
             Application.Current.Dispatcher.InvokeAsync(() =>
             {
             
-            Chat chat = new Chat(user.UserName, null, user.Id, null);
+            Chat chat = new Chat(user.UserName, null, user, null);
             AllChats.Add(chat);
             });
         }

@@ -15,12 +15,12 @@ namespace ChatAppSOLID.Services.Commands
 {
     public class LoginCommand : ICommand
     {
-        public Guid SenderId { get; }
+        public string SenderId { get; }
 
         private readonly string _username;
         private readonly string _password;
 
-        public LoginCommand(string username, string password, Guid senderId)
+        public LoginCommand(string username, string password, string senderId)
         {
             _username = username;
             _password = password;

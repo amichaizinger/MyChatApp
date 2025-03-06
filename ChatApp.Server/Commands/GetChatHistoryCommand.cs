@@ -13,11 +13,11 @@ namespace ChatApp.Server.Commands
     public class GetChatHistoryCommand
         : ICommand
     {
-        public readonly Guid _senderId;
+        public readonly string _senderId;
         private readonly List<Chat> _chats;
 
 
-        public GetChatHistoryCommand(Guid senderId, List<Chat> chats)
+        public GetChatHistoryCommand(string senderId, List<Chat> chats)
         {
             _senderId = senderId;
             _chats = chats;
@@ -25,18 +25,51 @@ namespace ChatApp.Server.Commands
 
         public async Task ExecuteAsync(Socket clientSocket)
         {
-           
-            Message message = new Message
+            List<Chat> currentBatch = new List<Chat>();
+            int estimatedTotalSize = 0;
+
+            foreach (var chat in _chats)
             {
-                SenderId = _senderId,
-                Content = JsonSerializer.Serialize(_chats),
-                Command = CommandType.GetChatHistory,
-                SentAt = DateTime.Now
-            };
-            string json = JsonSerializer.Serialize(message);
-            byte[] buffer = Encoding.UTF8.GetBytes(json);
-            await clientSocket.SendAsync(buffer, SocketFlags.None);
+                string chatJson = JsonSerializer.Serialize(chat);
+                int chatNumBytes = Encoding.UTF8.GetByteCount(chatJson);
+                if (estimatedTotalSize + chatNumBytes < 900)
+                {
+                    estimatedTotalSize += chatNumBytes;
+                    currentBatch.Add(chat);
+                }
+                else
+                {
+                    await SendBatchAsync(clientSocket, currentBatch);
+                    currentBatch.Clear();
+                    estimatedTotalSize = chatNumBytes;
+                    currentBatch.Add(chat);
+                }
+            }
+
+            if (currentBatch.Count > 0)
+            {
+                await SendBatchAsync(clientSocket, currentBatch);
+            }
         }
-    } 
-}
-    
+
+        private async Task SendBatchAsync(Socket clientSocket, List<Chat> batch)
+        {
+            try
+            {
+                Message message = new Message
+                {
+                    SenderId = _senderId,
+                    Content = JsonSerializer.Serialize(batch),
+                    Command = CommandType.GetChatHistory,
+                    SentAt = DateTime.Now
+                };
+                await SendWithLength.SendMessageAsync(clientSocket, message);
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending batch: {ex.Message}");
+            }
+        }
+    }
+}  

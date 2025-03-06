@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using ChatApp.Server.Commands;
 using ChatApp.Server.Models;
 using ChatApp.Server.Services.Commands.interfaces;
 using ChatApp.Server.Services.interfaces;
@@ -13,12 +14,12 @@ namespace ChatApp.Server.Services.Commands
 {
     public class LoginCommand : ICommand
     {
-        public Guid SenderId;
+        public string SenderId;
         public string IsCorrect;
         private readonly string _username;
 
 
-        public LoginCommand(string username, Guid senderId, string isCorrect)
+        public LoginCommand(string username, string senderId, string isCorrect)
         {
             _username = username;
             SenderId = senderId;
@@ -34,9 +35,8 @@ namespace ChatApp.Server.Services.Commands
                 Command = CommandType.Login,
                 SentAt = DateTime.Now
             };
-            string json = JsonSerializer.Serialize(message);
-            byte[] buffer = Encoding.UTF8.GetBytes(json);
-            await clientSocket.SendAsync(buffer, SocketFlags.None);
+            await SendWithLength.SendMessageAsync(clientSocket, message);
+
         }
     }
 }

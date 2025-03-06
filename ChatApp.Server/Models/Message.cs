@@ -10,13 +10,13 @@ namespace ChatApp.Server.Models
     public class Message
     {
         public CommandType Command { get; set; }
-        public Guid Id { get; set;  } = Guid.NewGuid();
+        public string Id { get; set;  } = Guid.NewGuid().ToString();
         public MessageStatus Status { get; set; }
         public string Content { get; set; }
         public DateTime SentAt { get; set; }
-        public Guid SenderId { get; set; }
-        public Guid? ReciverId { get; set; }  // null if it's a group message
-        public Guid? GroupId { get; set; }     // null if it's a private message
+        public string SenderId { get; set; }
+        public string? ReciverId { get; set; }  // null if it's a group message
+        public string? GroupId { get; set; }     // null if it's a private message
         
     }
 }

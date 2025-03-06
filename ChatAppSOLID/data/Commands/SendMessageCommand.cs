@@ -16,12 +16,12 @@ namespace ChatAppSOLID.Services.Commands
     public class SendMessageCommand 
     {
         public string Content { get; }
-        public Guid SenderId { get;  }
-        public Guid? ReciverId { get; }
-        public Guid? GroupId { get; }
+        public string SenderId { get;  }
+        public string? ReciverId { get; }
+        public string? GroupId { get; }
 
 
-        public SendMessageCommand(string content, Guid senderId, Guid? reciverId, Guid? groupId)
+        public SendMessageCommand(string content, string senderId, string? reciverId, string? groupId)
         {
             Content = content;
             SenderId = senderId;

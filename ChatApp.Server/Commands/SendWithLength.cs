@@ -6,15 +6,12 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ChatApp.Server.Models;
-using ChatApp.Server.Services.interfaces;
 
-namespace ChatApp.Server.Services.Commands.interfaces
+namespace ChatApp.Server.Commands
 {
-    public interface ICommand
+    public static class SendWithLength
     {
-        Task ExecuteAsync(Socket clientSocket);
-
-        async Task SendMessageAsync(Socket clientSocket, Message message)
+        public static async Task SendMessageAsync(Socket clientSocket, Message message)
         {
             string json = JsonSerializer.Serialize(message);
             byte[] jsonBytes = Encoding.UTF8.GetBytes(json);

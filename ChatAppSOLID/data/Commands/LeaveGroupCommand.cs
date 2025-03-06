@@ -18,10 +18,10 @@ namespace ChatAppSOLID.Services.Commands
 {
     public class LeaveGroupCommand : ICommand
     {
-        private readonly Guid _groupId;
-        private readonly Guid _senderId;
+        private readonly string _groupId;
+        private readonly string _senderId;
 
-        public LeaveGroupCommand(Guid groupId, Guid senderId)
+        public LeaveGroupCommand(string groupId, string senderId)
         {
             _groupId = groupId;
             _senderId = senderId;

@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using ChatApp.Server.Commands;
 using ChatApp.Server.Models;
 using ChatApp.Server.Services.Commands.interfaces;
 using ChatApp.Server.Services.interfaces;
@@ -14,11 +15,11 @@ namespace ChatAppSOLID.Services.Commands
 {
     public class LeaveGroupCommand : ICommand
     {
-        private readonly Guid _groupId;
-        private readonly Guid _senderId;
+        private readonly string _groupId;
+        private readonly string _senderId;
 
 
-        public LeaveGroupCommand(Guid groupId, Guid senderId)
+        public LeaveGroupCommand(string groupId, string senderId)
         {
             _groupId = groupId;
             _senderId = senderId;
@@ -34,9 +35,8 @@ namespace ChatAppSOLID.Services.Commands
                 SenderId = _senderId,
                 SentAt = DateTime.Now
             };
-            string json = JsonSerializer.Serialize(message);
-            byte[] buffer = Encoding.UTF8.GetBytes(json);
-            await clientSocket.SendAsync(buffer, SocketFlags.None);
+            await SendWithLength.SendMessageAsync(clientSocket, message);
+            ;
         }
     }
 }

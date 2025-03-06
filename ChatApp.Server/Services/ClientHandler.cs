@@ -28,7 +28,7 @@ namespace ChatApp.Server.Services
         private readonly IUserService _userService = new UserService();
         private readonly IMessageService _messageService = new MessageService();
         private readonly IGroupService _groupService = new GroupService();
-        private Dictionary<Guid, Socket> clients = new Dictionary<Guid, Socket>();
+        private Dictionary<string, Socket> clients = new Dictionary<string, Socket>();
 
 
         public async Task HandleClientAsync(Socket clientSocket)
@@ -37,7 +37,7 @@ namespace ChatApp.Server.Services
             {
                 while (clientSocket.Connected)
                 {
-                    byte[] buffer = new byte[1024];
+                    byte[] buffer = new byte[8192];
                     int bytesReceived = await clientSocket.ReceiveAsync(buffer, SocketFlags.None);
 
                     string json = Encoding.UTF8.GetString(buffer, 0, bytesReceived);
@@ -91,20 +91,20 @@ namespace ChatApp.Server.Services
             string username = login[0];
             string password = login[1];
 
-            User user = await _userService.LoginAsync(username, password);
+            var user = await _userService.LoginAsync(username, password);
 
             if (user != null)
             {
                 ICommand loginCommand = new LoginCommand(username, user.Id, "success");
                 await loginCommand.ExecuteAsync(clientSocket);
                 clients[user.Id] = clientSocket; // saving the socket with the username
-                HandleGetChatHistoryAsync(user.Id, clientSocket);
-                HandleGetOnlineUsersAsync(clientSocket);
+                await HandleGetChatHistoryAsync(user.Id, clientSocket);
+                await HandleGetOnlineUsersAsync(clientSocket);
 
             }
             else
             {
-                ICommand loginCommand = new LoginCommand(username, user.Id, "failure");
+                ICommand loginCommand = new LoginCommand("youLoser", "lalalalalala", "failure");
                 await loginCommand.ExecuteAsync(clientSocket);
             }
 
@@ -128,8 +128,10 @@ namespace ChatApp.Server.Services
                     ICommand registerCommand = new RegisterCommand(username, user.Id, "success");
                     await registerCommand.ExecuteAsync(clientSocket);
                     clients[user.Id] = clientSocket;
+                    await HandleGetChatHistoryAsync(user.Id, clientSocket);
+                    await HandleGetOnlineUsersAsync(clientSocket);
 
-                    foreach(var client in clients)
+                    foreach (var client in clients)
                     {
                         if (client.Key != user.Id)
                         {
@@ -141,7 +143,7 @@ namespace ChatApp.Server.Services
 
                 else
                 {
-                    ICommand registerCommand = new RegisterCommand(username, user.Id, "failure");
+                    ICommand registerCommand = new RegisterCommand("whatsappsocks", "useChatAppInstead", "failure");
                     await registerCommand.ExecuteAsync(clientSocket);
                 }
             }
@@ -151,7 +153,7 @@ namespace ChatApp.Server.Services
             }
         }
 
-        private async Task HandleGetChatHistoryAsync(Guid userId, Socket clientSocket)
+        private async Task HandleGetChatHistoryAsync(string userId, Socket clientSocket)
         {
             var chatHistory = await _messageService.GetChatHistoryAsync(userId);
             ICommand getHistory = new GetChatHistoryCommand(userId, chatHistory);
@@ -166,9 +168,9 @@ namespace ChatApp.Server.Services
             ICommand sendMessage = new SendMessageCommand(message);
 
 
-            if (message.GroupId.HasValue)
+            if (!string.IsNullOrEmpty(message.GroupId))
             {
-                var members = await _groupService.GetGroupMembersAsync(message.GroupId.Value);
+                var members = await _groupService.GetGroupMembersAsync(message.GroupId);
                 foreach (var member in members)
                 {
                     if (clients.TryGetValue(member.Id, out Socket memberSocket))
@@ -178,9 +180,9 @@ namespace ChatApp.Server.Services
                     }
                 }
             }
-            else if (message.ReciverId.HasValue)
+            else if (!string.IsNullOrEmpty(message.ReciverId))
             {
-                if (clients.TryGetValue(message.ReciverId.Value, out Socket receiverSocket))
+                if (clients.TryGetValue(message.ReciverId, out Socket receiverSocket))
                 {
                     await sendMessage.ExecuteAsync(receiverSocket);
                     message.Status = MessageStatus.Recived;
@@ -193,20 +195,16 @@ namespace ChatApp.Server.Services
         {
             try
             {
-                var group = message.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-                              .Select(g => g.Trim()).Where(g => !string.IsNullOrEmpty(g)).ToList();
+                var group = JsonSerializer.Deserialize<Group>(message.Content);
 
-                string GroupName = group[0];
-                List<Guid> members = group.Skip(1).Select(g => Guid.Parse(g)).ToList();
-                members.Add(message.SenderId);
 
-                await _groupService.CreateGroupAsync(GroupName, members);
+                await _groupService.NewGroupAsync(group);
 
                 ICommand createGroup = new CreateGroupCommand(message);
 
-                foreach (var member in members)
+                foreach (var member in group.Members)
                 {
-                    if (clients.TryGetValue(member, out Socket memberSocket))
+                    if (clients.TryGetValue(member.Id, out Socket memberSocket))
                     {
                         await createGroup.ExecuteAsync(memberSocket);
                     }
@@ -222,9 +220,9 @@ namespace ChatApp.Server.Services
         {
             try
             {
-                await _groupService.RemoveUserFromGroupAsync(message.GroupId.Value, message.SenderId);
+                await _groupService.RemoveUserFromGroupAsync(message.GroupId, message.SenderId);
 
-                ICommand leaveGroup = new LeaveGroupCommand(message.GroupId.Value, message.SenderId);
+                ICommand leaveGroup = new LeaveGroupCommand(message.GroupId, message.SenderId);
                 await leaveGroup.ExecuteAsync(clientSocket);
             }
             catch (Exception ex)
@@ -243,17 +241,16 @@ namespace ChatApp.Server.Services
 
         private async Task HandleAddUserToGroupAsync(Message message)
         {
-            var userIds = message.Content.Split(' ', StringSplitOptions.RemoveEmptyEntries)
-            .Select(id => id.Trim()).Where(id => !string.IsNullOrEmpty(id)).ToList();
+            var userIds = JsonSerializer.Deserialize<List<string>>(message.Content);
 
             foreach (var userId in userIds)
             {
-                await _groupService.AddUserToGroupAsync(message.GroupId.Value, Guid.Parse(userId));
+                await _groupService.AddUserToGroupAsync(message.GroupId, userId);
                 ICommand addUsers = new AddUserToGroupCommand(message);
 
                 foreach (var member in userIds)
                 {
-                    if (clients.TryGetValue(Guid.Parse(member), out Socket memberSocket))
+                    if (clients.TryGetValue(member, out Socket memberSocket))
                     {
                         await addUsers.ExecuteAsync(memberSocket);
                     }

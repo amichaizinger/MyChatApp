@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
+using ChatApp.Server.Commands;
 using ChatApp.Server.Models;
 using ChatApp.Server.Services.Commands.interfaces;
 using ChatApp.Server.Services.interfaces;
@@ -25,9 +26,8 @@ namespace ChatApp.Server.Services.Commands
 
         public async Task ExecuteAsync(Socket clientSocket)
         {
-            string json = JsonSerializer.Serialize(_message);
-            byte[] buffer = Encoding.UTF8.GetBytes(json);
-            await clientSocket.SendAsync(buffer, SocketFlags.None);
+            await SendWithLength.SendMessageAsync(clientSocket, _message);
         }
+        
     }
 }

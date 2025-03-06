@@ -27,5 +27,6 @@ namespace ChatAppSOLID
                 Debug.WriteLine(ex.Message);
             }
         }
+
     }
 }

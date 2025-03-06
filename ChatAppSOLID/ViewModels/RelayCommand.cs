@@ -7,38 +7,33 @@ using System.Windows.Input;
 
 namespace ChatAppSOLID.ViewModels
 {
-    public class RelayCommand : ICommand
-    {
-        private readonly Action _execute;          // The action to run
-        private readonly Func<bool> _canExecute;   // The condition to check if it can run
-
-        // Constructor takes both the action and the condition
-        public RelayCommand(Action execute, Func<bool> canExecute = null)
+        public class RelayCommand : ICommand
         {
-            _execute = execute;
-            _canExecute = canExecute;  // can be null if no condition is needed
-        }
+            private readonly Action _execute;
+            private readonly Func<bool> _canExecute;
 
-        // This event tells the UI when the command's availability changes
-        public event EventHandler CanExecuteChanged
-        {
-            add { CommandManager.RequerySuggested += value; }
-            remove { CommandManager.RequerySuggested -= value; }
-        }
+            public RelayCommand(Action execute, Func<bool> canExecute = null)
+            {
+                _execute = execute ?? throw new ArgumentNullException(nameof(execute));
+                _canExecute = canExecute;
+            }
 
-        //
-        // s if the command can run based on the condition
-        public bool CanExecute(object parameter)
-        {
-            // If no condition was given, say yes
-            // Otherwise, check the condition
-            return _canExecute == null || _canExecute();
-        }
+            public bool CanExecute(object parameter)
+            {
+                return _canExecute == null || _canExecute();
+            }
 
-        // Runs the stored action
-        public void Execute(object parameter)
-        {
-            _execute();
+            public void Execute(object parameter)
+            {
+                if (CanExecute(parameter))
+                    _execute();
+            }
+
+            public event EventHandler CanExecuteChanged;
+
+            public void RaiseCanExecuteChanged()
+            {
+                CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
-}

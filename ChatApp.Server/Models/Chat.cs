@@ -16,8 +16,8 @@ namespace ChatApp.Server.Models
         public int UnreadMessagesCount { get; set; }
 
 
-        public Guid? FriendId { get; set; }
-        public Guid? GroupId { get; set; }
+        public User? Friend { get; set; }
+        public string? GroupId { get; set; }
 
         public string LatestMessagePreview
         {
@@ -59,13 +59,13 @@ namespace ChatApp.Server.Models
         }
 
 
-        public Chat(string name, Guid? groupId, Guid? friendId, ObservableCollection<User>? members, ObservableCollection<Message> ?messages)
+        public Chat(string name, string? groupId, User? friend, ObservableCollection<User>? members, ObservableCollection<Message> ?messages)
         {
             Messages = messages;
             Participants = new ObservableCollection<User>(members);
             Name = name;
             GroupId = groupId;
-            FriendId = friendId;
+            Friend = friend;
         }
 
         

@@ -18,9 +18,9 @@ namespace ChatAppSOLID.Services.Commands
     {
         private readonly string _username;
         private readonly string _password;
-        private readonly Guid _senderId;
+        private readonly string _senderId;
 
-        public RegisterCommand(string username, string password, Guid senderId)
+        public RegisterCommand(string username, string password, string senderId)
         {
             _username = username;
             _password = password;

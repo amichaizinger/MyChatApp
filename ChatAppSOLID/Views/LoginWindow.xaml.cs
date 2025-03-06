@@ -136,11 +136,19 @@ namespace ChatAppSOLID
                 };
                 errorWindow.ShowDialog(); // Use ShowDialog for modal behavior
             }
+            else if (username.Contains(" ") || password.Contains(" "))
+            {
+                var errorWindow = new ConnectionError("black-spaces are mot allowed")
+                {
+                    Owner = this
+                };
+                errorWindow.ShowDialog();
+            }
 
             else
             {
                 // Generate a temporary SenderId (e.g., Guid.Empty for unauthenticated users)
-                Guid senderId = Guid.Empty; // This should be replaced with a real user ID after login or registration
+                string senderId = Guid.Empty.ToString(); // This should be replaced with a real user ID after login or registration
 
             // Create and execute the LoginCommand using the socket from IChatClient
             var loginCommand = new LoginCommand(username, password, senderId);
@@ -172,7 +180,7 @@ namespace ChatAppSOLID
         }
         public void LoginFailure(object sender, string error)
         {
-            var connectionError = new ConnectionError("User name or password are incorrect")
+            var connectionError = new ConnectionError("Username or password are incorrect")
             {
                 Owner = this
             };

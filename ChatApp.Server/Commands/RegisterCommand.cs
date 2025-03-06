@@ -8,17 +8,18 @@ using ChatApp.Server.Models;
 using ChatApp.Server.Services.interfaces;
 using System.Net.Sockets;
 using System.Text.Json;
+using ChatApp.Server.Commands;
 
 namespace ChatApp.Server.Services.Commands
 {
     public class RegisterCommand : ICommand
     {
         private readonly string _username;
-        private readonly Guid _senderId;
+        private readonly string _senderId;
         private readonly string _isRegistered;
 
 
-        public RegisterCommand(string username, Guid senderId, string isRegistered)
+        public RegisterCommand(string username, string senderId, string isRegistered)
         {
             _username = username;
             _senderId = senderId;
@@ -34,9 +35,8 @@ namespace ChatApp.Server.Services.Commands
                 Content = _isRegistered + " " + _username,
 
             };
-            string json = JsonSerializer.Serialize(message);
-            byte[] buffer = Encoding.UTF8.GetBytes(json);
-            await clientSocket.SendAsync(buffer, SocketFlags.None);
+            await SendWithLength.SendMessageAsync(clientSocket, message);
+
         }
     }
 }

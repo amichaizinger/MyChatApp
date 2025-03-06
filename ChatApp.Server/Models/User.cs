@@ -10,7 +10,7 @@ namespace ChatApp.Server.Models
     {
 
 
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public string Id { get; set; } = Guid.NewGuid().ToString();
         private string _username;
         public string UserName
         {
@@ -29,7 +29,7 @@ namespace ChatApp.Server.Models
 
         private string _password;
 
-        public string Password
+        public string ?Password
         {
             get => _password;
             set
@@ -43,13 +43,15 @@ namespace ChatApp.Server.Models
                 _password = value;
             }
         }
-        public bool IsOnline = false;
         public List<Group> Groups { get; } = new List<Group>();
         public List<Message> Messages { get; set; } = new List<Message>();
 
 
 
+        public User()
+        {
 
+        }
 
 
     }

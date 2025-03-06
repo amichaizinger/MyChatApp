@@ -18,14 +18,14 @@ namespace ChatAppSOLID.Services.Commands
 {
     public class AddUserToGroupCommand : ICommand
     {
-        private readonly Guid _groupId;
-        private readonly Guid _senderId;
+        private readonly string _groupId;
+        private readonly string _senderId;
         private string content;
         public List<User> Members;
 
 
 
-        public AddUserToGroupCommand(Guid groupId, Guid senderId, List<User> members)
+        public AddUserToGroupCommand(string groupId, string senderId, List<User> members)
         {
             _groupId = groupId;
             _senderId = senderId;

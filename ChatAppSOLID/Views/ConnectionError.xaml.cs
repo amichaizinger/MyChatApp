@@ -22,6 +22,7 @@ namespace ChatAppSOLID
         public ConnectionError(string error)
         {
             InitializeComponent();
+            
             ErrorMessage.Text = error;
         }
         private void OkButton_Click(object sender, RoutedEventArgs e)

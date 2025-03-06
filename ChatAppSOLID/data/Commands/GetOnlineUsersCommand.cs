@@ -14,9 +14,9 @@ namespace ChatAppSOLID.Services.Commands
 {
     internal class GetOnlineUsersCommand : ICommand
     {
-        private readonly Guid _senderId;
+        private readonly string _senderId;
 
-        public GetOnlineUsersCommand(Guid senderId) 
+        public GetOnlineUsersCommand(string senderId) 
         {
             _senderId = senderId;
         }
