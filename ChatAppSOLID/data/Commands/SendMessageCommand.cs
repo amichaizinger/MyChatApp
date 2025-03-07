@@ -27,6 +27,7 @@ namespace ChatAppSOLID.Services.Commands
             SenderId = senderId;
             ReciverId = reciverId;
             GroupId = groupId;
+
         }
 
         public async Task<Message>ExecuteAsync(Socket clientSocket)

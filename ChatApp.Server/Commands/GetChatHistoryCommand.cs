@@ -58,6 +58,7 @@ namespace ChatApp.Server.Commands
             {
                 Message message = new Message
                 {
+                    Id = Guid.NewGuid().ToString(),
                     SenderId = _senderId,
                     Content = JsonSerializer.Serialize(batch),
                     Command = CommandType.GetChatHistory,

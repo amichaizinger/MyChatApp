@@ -29,6 +29,7 @@ namespace ChatApp.Server.Services.Commands
 
             Message message = new Message
             {
+                Id = Guid.NewGuid().ToString(),
                 Content = JsonSerializer.Serialize(_online),
                 Command = CommandType.GetOnlineUsers,
             };

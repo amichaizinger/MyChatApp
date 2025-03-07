@@ -21,6 +21,7 @@ namespace ChatAppSOLID.Services.Commands
 
         public LeaveGroupCommand(string groupId, string senderId)
         {
+
             _groupId = groupId;
             _senderId = senderId;
 
@@ -30,6 +31,7 @@ namespace ChatAppSOLID.Services.Commands
         {
             var message = new Message
             {
+                Id = Guid.NewGuid().ToString(),
                 Command = CommandType.LeaveGroup,
                 GroupId = _groupId,
                 SenderId = _senderId,

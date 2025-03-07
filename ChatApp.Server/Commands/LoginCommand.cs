@@ -30,6 +30,7 @@ namespace ChatApp.Server.Services.Commands
         {
             Message message = new Message
             {
+                Id = Guid.NewGuid().ToString(),
                 SenderId = SenderId,
                 Content = IsCorrect + " " + _username,
                 Command = CommandType.Login,

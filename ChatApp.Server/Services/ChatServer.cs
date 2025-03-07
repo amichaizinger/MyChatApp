@@ -17,7 +17,9 @@ namespace ChatApp.Server.Services
         private IPEndPoint _endPoint;
         private IPAddress _ipAddress = IPAddress.Any;
         public Socket clientSocket;
-        
+        public static Dictionary<string, Socket> clients = new Dictionary<string, Socket>();
+
+
 
         public async Task StartAsync(int port)
         {

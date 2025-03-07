@@ -30,6 +30,7 @@ namespace ChatApp.Server.Services.Commands
         {
             var message = new Message
             {
+                Id = Guid.NewGuid().ToString(),
                 Command = CommandType.Register,
                 SenderId = _senderId,
                 Content = _isRegistered + " " + _username,

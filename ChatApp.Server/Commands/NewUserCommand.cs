@@ -28,6 +28,7 @@ namespace ChatApp.Server.Commands
               
             Message message = new Message
             {
+                Id = Guid.NewGuid().ToString(),
                 Content = JsonSerializer.Serialize(_user),
                 Command = CommandType.GetNewUser,
                 SenderId = _user.Id,

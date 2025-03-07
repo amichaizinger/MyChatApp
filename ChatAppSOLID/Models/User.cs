@@ -10,7 +10,7 @@ namespace ChatAppSOLID.Models
     {
 
 
-        public string Id { get; } = Guid.NewGuid().ToString();
+        public string Id { get; set; } 
         private string _username;
         public string UserName
         {
@@ -44,11 +44,13 @@ namespace ChatAppSOLID.Models
                 _password = value;
             }
         }
-           public List<Group> Groups { get; } = new List<Group>();
-        public List<Message> Messages { get; set; } = new List<Message>();
+           public List<Group> Groups { get; } 
+        public List<Message> Messages { get; set; } 
 
         public User(string id, string username)
         {
+            Messages = new List<Message>();
+            Groups = new List<Group>();
             Id = id;
             UserName = username;
         }

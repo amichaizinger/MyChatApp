@@ -56,6 +56,7 @@ namespace ChatAppSOLID.Services.NewFolder
             {
                 UserName = username,
                 Password = password,
+                Id = Guid.NewGuid().ToString()
             };
             _db.Users.Add(user);
             await _db.SaveChangesAsync();

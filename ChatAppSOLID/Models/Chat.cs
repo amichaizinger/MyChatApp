@@ -11,14 +11,50 @@ namespace ChatAppSolid.Models
 
     namespace ChatAppSolid.Models
     {
-        public class Chat 
+        public class Chat : PropertyNotifier
         {
 
             public string Name { get; set; }
-            public ObservableCollection<Message> Messages { get; set; } = new ObservableCollection<Message>(); // Public setter
-            public ObservableCollection<User>? Participants { get; set; } = new ObservableCollection<User>(); // Public setter
-            public int UnreadMessagesCount { get; set; }
-            public User? Friend { get; set; }
+
+            private ObservableCollection<Message> _messages;
+            public ObservableCollection<Message> Messages
+            {
+                get => _messages;
+                set
+                {
+                    _messages = value;
+                    OnPropertyChanged();
+                    OnPropertyChanged(nameof(LatestMessagePreview));
+                    OnPropertyChanged(nameof(LatestMessageTime));
+                    OnPropertyChanged(nameof(UnreadMessagesCount));
+                }
+            }
+
+            private ObservableCollection<User>? _participents;
+            public ObservableCollection<User>? Participants
+            {
+                get => _participents;
+                set
+                {
+                    _participents = value;
+                    OnPropertyChanged();
+                }
+            }
+
+            private int _unread;
+            public int UnreadMessagesCount
+            {
+                get => _unread;
+                set
+                {
+                    _unread = value;
+                    OnPropertyChanged(nameof(UnreadMessagesCount));
+                    OnPropertyChanged(nameof(HasUnreadMessages));
+                }
+            }
+            public bool HasUnreadMessages => UnreadMessagesCount > 0; // Computed property
+
+            public User ?Friend { get; set; }
             public string? GroupId { get; set; }
 
             public string LatestMessagePreview
@@ -53,10 +89,18 @@ namespace ChatAppSolid.Models
                 Friend = friend;
             }
 
+
             public void AddMessage(Message message, MainViewModel mainViewModel)
             {
                 Messages.Add(message);
-                if (message.SenderId != mainViewModel.UserId) UnreadMessagesCount++;
+                if (message.SenderId != mainViewModel.UserId)
+                {
+                    UnreadMessagesCount++;
+                }
+                OnPropertyChanged(nameof(Messages));
+                OnPropertyChanged(nameof(UnreadMessagesCount));
+                OnPropertyChanged(nameof(LatestMessageTime));
+                OnPropertyChanged(nameof(LatestMessagePreview));
             }
 
             public void MarkAsRead() => UnreadMessagesCount = 0;

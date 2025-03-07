@@ -8,9 +8,9 @@ namespace ChatApp.Server.Models
 {
     public class Group
     {
-        public string Id { get; set;  } = Guid.NewGuid().ToString();
+        public string Id { get; set;  } 
         public string Name { get; set; }
-        public List<User> Members { get; set; } = new List<User>();
-        public List<Message> Messages { get; set; } = new List<Message>();
+        public List<User> Members { get; set; }
+        public List<Message> Messages { get; set; }
     }
 }

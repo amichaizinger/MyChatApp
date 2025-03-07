@@ -29,10 +29,17 @@ namespace ChatAppSOLID.Services.Commands
 
         public async Task ExecuteAsync(Socket clientSocket)
         {
+            var group = new Group
+            {
+                Id = Guid.NewGuid().ToString(),
+                Members = this.Members,
+                Name = this.Name,
+                Messages = new List<Message>()
+            };
             Message message = new Message
             {
                 SenderId = SenderId,
-                Content =JsonSerializer.Serialize(Members),
+                Content =JsonSerializer.Serialize(group),
                 Command = CommandType.CreateGroup,
                 SentAt = DateTime.Now
             };

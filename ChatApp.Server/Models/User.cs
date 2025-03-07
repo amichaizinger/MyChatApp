@@ -10,7 +10,7 @@ namespace ChatApp.Server.Models
     {
 
 
-        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public string Id { get; set; }
         private string _username;
         public string UserName
         {
@@ -43,8 +43,8 @@ namespace ChatApp.Server.Models
                 _password = value;
             }
         }
-        public List<Group> Groups { get; } = new List<Group>();
-        public List<Message> Messages { get; set; } = new List<Message>();
+        public List<Group> Groups { get; }
+        public List<Message> Messages { get; set; }
 
 
 

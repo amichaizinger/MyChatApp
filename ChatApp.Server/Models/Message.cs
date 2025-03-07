@@ -10,7 +10,7 @@ namespace ChatApp.Server.Models
     public class Message
     {
         public CommandType Command { get; set; }
-        public string Id { get; set;  } = Guid.NewGuid().ToString();
+        public string Id { get; set;  }
         public MessageStatus Status { get; set; }
         public string Content { get; set; }
         public DateTime SentAt { get; set; }

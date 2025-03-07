@@ -173,18 +173,20 @@ namespace ChatAppSOLID.Services.NewFolder
 
             try
             {
-                await Application.Current.Dispatcher.InvokeAsync(() =>
+                Application.Current.Dispatcher.Invoke(() =>
                 {
                     try
                     {
                         if (isCorrect == "success")
                         {
                             LoginSuccess?.Invoke(this, username);
+                            Debug.WriteLine("Login success");
                             mainViewModel.OnLoginSuccess(username, userId);
                         }
                         else
                         {
                             LoginFailure?.Invoke(this, "User name or password are incorrect");
+                            Debug.WriteLine("Login failed");
                         }
                     }
                     catch (Exception ex)
@@ -214,7 +216,7 @@ namespace ChatAppSOLID.Services.NewFolder
 
             try
             {
-                await Application.Current.Dispatcher.InvokeAsync(() =>
+                Application.Current.Dispatcher.Invoke(() =>
                 {
                     try
                     {

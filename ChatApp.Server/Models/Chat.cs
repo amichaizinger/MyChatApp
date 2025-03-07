@@ -11,8 +11,8 @@ namespace ChatApp.Server.Models
     {
         public string Name { get; set; }
 
-        public ObservableCollection<Message> Messages { get; set; } = new ObservableCollection<Message>();  // Uses ObservableCollection for potential data binding (optional, can be IList if avoiding binding).
-        public ObservableCollection<User>? Participants { get; set; } = new ObservableCollection<User>();
+        public ObservableCollection<Message> Messages { get; set; } 
+        public ObservableCollection<User>? Participants { get; set; } 
         public int UnreadMessagesCount { get; set; }
 
 

@@ -184,6 +184,7 @@ namespace ChatAppSOLID
             {
                 Owner = this
             };
+            connectionError.ShowDialog();
         }
     }
 }

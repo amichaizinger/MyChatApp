@@ -48,33 +48,64 @@ namespace ChatApp.Server.Services.NewFolder
 
             // Step 4: Fetch all relevant messages with proper includes
             var allMessages = await _db.Messages
-                .Where(m => m.SenderId == userId || m.ReciverId == userId ||
+                .Where(m => (m.SenderId == userId || m.ReciverId == userId) && string.IsNullOrEmpty(m.GroupId) ||
                             (!string.IsNullOrEmpty(m.GroupId) && _db.Groups.Any(g => g.Id == m.GroupId && g.Members.Any(u => u.Id == userId))))
                 .OrderBy(m => m.SentAt)
                 .ToListAsync();
 
-            // Step 5: Process private chats (direct messages)
-            var privateMessages = allMessages.Where(m => string.IsNullOrEmpty(m.GroupId))
-                .GroupBy(m => m.SenderId == userId ? m.ReciverId : m.SenderId)
-                .ToList();
+            // Step 5: Process private chats (direct messages) - FIXED LOGIC
+            // First separate direct messages
+            var privateMessages = allMessages.Where(m => string.IsNullOrEmpty(m.GroupId)).ToList();
 
-            foreach (var group in privateMessages)
+            // Create dictionary to store user ID to message list mapping
+            var conversationsByUser = new Dictionary<string, List<Message>>();
+
+            // Loop through all private messages and organize them by conversation partner
+            foreach (var message in privateMessages)
             {
-                var otherUserId = group.Key;
-                string userName = "Unknown User";
-
-                if (allUsers.TryGetValue(otherUserId, out var user))
+                // Determine who the conversation partner is
+                string partnerId;
+                if (message.SenderId == userId)
                 {
-                    userName = user.UserName;
+                    partnerId = message.ReciverId;
+                }
+                else // message.ReciverId == userId
+                {
+                    partnerId = message.SenderId;
+                }
+
+                // Make sure we have a list for this partner
+                if (!conversationsByUser.ContainsKey(partnerId))
+                {
+                    conversationsByUser[partnerId] = new List<Message>();
+                }
+
+                // Add this message to the appropriate conversation
+                conversationsByUser[partnerId].Add(message);
+            }
+
+            // Now create a chat for each unique conversation partner
+            foreach (var entry in conversationsByUser)
+            {
+                var partnerId = entry.Key;
+                var messages = entry.Value;
+
+                string partnerName = "Unknown User";
+                User partner = null;
+
+                if (allUsers.TryGetValue(partnerId, out var foundUser))
+                {
+                    partnerName = foundUser.UserName;
+                    partner = foundUser;
                 }
 
                 chats.Add(new Chat
                 {
-                    Name = userName,
+                    Name = partnerName,
                     GroupId = null,
-                    Friend = user,
+                    Friend = partner,
                     Participants = null,
-                    Messages = new ObservableCollection<Message>(group.ToList())
+                    Messages = new ObservableCollection<Message>(messages)
                 });
             }
 
@@ -124,7 +155,7 @@ namespace ChatApp.Server.Services.NewFolder
             // Step 8: Add empty chats for users with no messages
             foreach (var user in allUsers.Values)
             {
-                if (!chats.Any(c => c.Friend == user))
+                if (!conversationsByUser.ContainsKey(user.Id))
                 {
                     chats.Add(new Chat
                     {
@@ -139,5 +170,7 @@ namespace ChatApp.Server.Services.NewFolder
 
             return chats;
         }
+
+
     }
 }

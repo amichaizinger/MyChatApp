@@ -8,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using ChatApp.Server.Commands;
+using ChatApp.Server.Data;
 using ChatApp.Server.Models;
 using ChatApp.Server.Services.Commands;
 using ChatApp.Server.Services.Commands.interfaces;
@@ -28,7 +29,6 @@ namespace ChatApp.Server.Services
         private readonly IUserService _userService = new UserService();
         private readonly IMessageService _messageService = new MessageService();
         private readonly IGroupService _groupService = new GroupService();
-        private Dictionary<string, Socket> clients = new Dictionary<string, Socket>();
 
 
         public async Task HandleClientAsync(Socket clientSocket)
@@ -97,7 +97,7 @@ namespace ChatApp.Server.Services
             {
                 ICommand loginCommand = new LoginCommand(username, user.Id, "success");
                 await loginCommand.ExecuteAsync(clientSocket);
-                clients[user.Id] = clientSocket; // saving the socket with the username
+                OnlineClientsSocket.OnlineClients[user.Id] = clientSocket; // saving the socket with the username
                 await HandleGetChatHistoryAsync(user.Id, clientSocket);
                 await HandleGetOnlineUsersAsync(clientSocket);
 
@@ -127,11 +127,11 @@ namespace ChatApp.Server.Services
                 {
                     ICommand registerCommand = new RegisterCommand(username, user.Id, "success");
                     await registerCommand.ExecuteAsync(clientSocket);
-                    clients[user.Id] = clientSocket;
+                    OnlineClientsSocket.OnlineClients[user.Id] = clientSocket;
                     await HandleGetChatHistoryAsync(user.Id, clientSocket);
                     await HandleGetOnlineUsersAsync(clientSocket);
 
-                    foreach (var client in clients)
+                    foreach (var client in OnlineClientsSocket.OnlineClients)
                     {
                         if (client.Key != user.Id)
                         {
@@ -173,7 +173,7 @@ namespace ChatApp.Server.Services
                 var members = await _groupService.GetGroupMembersAsync(message.GroupId);
                 foreach (var member in members)
                 {
-                    if (clients.TryGetValue(member.Id, out Socket memberSocket))
+                    if (OnlineClientsSocket.OnlineClients.TryGetValue(member.Id, out Socket memberSocket))
                     {
                         await sendMessage.ExecuteAsync(memberSocket);
                         message.Status = MessageStatus.Recived;
@@ -182,7 +182,7 @@ namespace ChatApp.Server.Services
             }
             else if (!string.IsNullOrEmpty(message.ReciverId))
             {
-                if (clients.TryGetValue(message.ReciverId, out Socket receiverSocket))
+                if (OnlineClientsSocket.OnlineClients.TryGetValue(message.ReciverId, out Socket receiverSocket))
                 {
                     await sendMessage.ExecuteAsync(receiverSocket);
                     message.Status = MessageStatus.Recived;
@@ -204,7 +204,7 @@ namespace ChatApp.Server.Services
 
                 foreach (var member in group.Members)
                 {
-                    if (clients.TryGetValue(member.Id, out Socket memberSocket))
+                    if (OnlineClientsSocket.OnlineClients.TryGetValue(member.Id, out Socket memberSocket))
                     {
                         await createGroup.ExecuteAsync(memberSocket);
                     }
@@ -234,7 +234,7 @@ namespace ChatApp.Server.Services
 
         private async Task HandleGetOnlineUsersAsync(Socket clientSocket)
         {
-            var onlineUsers = clients.Keys.ToList();
+            var onlineUsers = OnlineClientsSocket.OnlineClients.Keys.ToList();
             ICommand getOnline = new GetOnlineUsersCommand(onlineUsers);
             await getOnline.ExecuteAsync(clientSocket);
         }
@@ -250,7 +250,7 @@ namespace ChatApp.Server.Services
 
                 foreach (var member in userIds)
                 {
-                    if (clients.TryGetValue(member, out Socket memberSocket))
+                    if (OnlineClientsSocket.OnlineClients.TryGetValue(member, out Socket memberSocket))
                     {
                         await addUsers.ExecuteAsync(memberSocket);
                     }
