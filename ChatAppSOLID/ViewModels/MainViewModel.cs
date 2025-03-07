@@ -268,7 +268,8 @@ namespace ChatAppSOLID.ViewModels
             AllChats.Add(new Chat("Best Chat App", null, new User { Id = "UserId" }, null)); // Private chat
             AllChats[0].AddMessage(new Message
             {
-                Content = "Welcome to Best Chat App! 👋 Behold the GREATEST messaging app ever created! Our genius developers have crafted the most AMAZING chat experience known to humankind! You'll be BLOWN AWAY by how smooth and intuitive everything is!",
+                Content = "Welcome to Best Chat App!" + 
+                " 👋 Behold the GREATEST messaging app ever created! Our genius developers have crafted the most AMAZING chat experience known to humankind! You'll be BLOWN AWAY by how smooth and intuitive everything is!",
                 Command = CommandType.SendMessage,
                 SenderId = "UserId",
                 ReciverId = UserId,

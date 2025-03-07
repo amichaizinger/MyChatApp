@@ -326,7 +326,11 @@
                                     </MultiBinding>
                                 </Border.Style>
                                 <StackPanel>
-                                    <TextBlock Text="{Binding Content}" />
+                                    <!-- Add TextWrapping and MaxWidth to fix wrapping issues -->
+                                    <TextBlock Text="{Binding Content}" 
+                              TextWrapping="Wrap" 
+                              MaxWidth="450" />
+                                    <!-- Adjust this value based on your UI width -->
                                     <TextBlock Text="{Binding SentAt, StringFormat={}{0:HH:mm}}" FontSize="10" Opacity="0.7" />
                                 </StackPanel>
                             </Border>
