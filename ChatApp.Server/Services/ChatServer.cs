@@ -42,7 +42,9 @@ namespace ChatApp.Server.Services
 
         public void StopAsync(Socket clientSocket)
         {
-                clientSocket.Shutdown(SocketShutdown.Both); // todo: use in clientHAndler
+                clientSocket.Shutdown(SocketShutdown.Both);
+            clientSocket.Close();
+            clientSocket.Dispose();
         }
 
        

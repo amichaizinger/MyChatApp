@@ -9,7 +9,7 @@ using ChatAppSOLID.Models;
 
 namespace ChatAppSOLID.ViewModels
 {
-        public class SelectableUser : INotifyPropertyChanged
+        public class SelectableUser : PropertyNotifier
         {
             private readonly User _user;
             private bool _isSelected;
@@ -28,16 +28,14 @@ namespace ChatAppSOLID.ViewModels
                 }
             }
 
-            public SelectableUser(User user)
+        public string Username => User?.UserName;
+
+        public SelectableUser(User user)
             {
                 _user = user;
             }
 
-            public event PropertyChangedEventHandler PropertyChanged;
-            protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
+           
         }
     }
 

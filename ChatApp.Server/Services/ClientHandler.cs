@@ -80,6 +80,8 @@ namespace ChatApp.Server.Services
             finally
             {
                 clientSocket.Shutdown(SocketShutdown.Both);
+                clientSocket.Close();
+                clientSocket.Dispose();
             }
         }
 
@@ -155,6 +157,7 @@ namespace ChatApp.Server.Services
 
         private async Task HandleGetChatHistoryAsync(string userId, Socket clientSocket)
         {
+
             var chatHistory = await _messageService.GetChatHistoryAsync(userId);
             ICommand getHistory = new GetChatHistoryCommand(userId, chatHistory);
             await getHistory.ExecuteAsync(clientSocket);
@@ -197,7 +200,7 @@ namespace ChatApp.Server.Services
             {
                 var group = JsonSerializer.Deserialize<Group>(message.Content);
 
-
+                
                 await _groupService.NewGroupAsync(group);
 
                 ICommand createGroup = new CreateGroupCommand(message);

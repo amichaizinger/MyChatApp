@@ -17,12 +17,7 @@ namespace ChatAppSOLID.Models
             get => _username;
             set
             {
-                if (string.IsNullOrEmpty(value))
-                    throw new ArgumentException("Username cannot be empty");
-
-                if (value.Length < 8)
-                    throw new ArgumentException("Username must be at least 8 characters long");
-                               
+            
                 _username = value;
                 
             }
@@ -35,11 +30,6 @@ namespace ChatAppSOLID.Models
             get => _password;
             set
             {
-                if (string.IsNullOrEmpty(value))
-                    throw new ArgumentException("Password cannot be empty");
-
-                if (value.Length < 8)
-                    throw new ArgumentException("Password must be at least 8 characters long");
 
                 _password = value;
             }

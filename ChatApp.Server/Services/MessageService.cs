@@ -97,6 +97,10 @@ namespace ChatApp.Server.Services.NewFolder
                 {
                     partnerName = foundUser.UserName;
                     partner = foundUser;
+                    if (partner.Groups != null)
+                    {
+                        partner.Groups.Clear();
+                    }
                 }
 
                 chats.Add(new Chat
@@ -124,6 +128,16 @@ namespace ChatApp.Server.Services.NewFolder
                 {
                     groupName = groupInfo.Name;
                     participants = new ObservableCollection<User>(groupInfo.Members);
+                    if (participants != null)
+                    {
+                        foreach (var participent in participants)
+                        {
+                            if (participent.Groups != null)
+                            {
+                                participent.Groups.Clear();
+                            }
+                        }
+                    }
                 }
 
                 chats.Add(new Chat
@@ -141,6 +155,16 @@ namespace ChatApp.Server.Services.NewFolder
             {
                 if (!chats.Any(c => c.GroupId == group.Id))
                 {
+                    if (group.Members != null)
+                    {
+                        foreach (var participent in group.Members)
+                        {
+                            if (participent.Groups != null)
+                            {
+                                participent.Groups.Clear();
+                            }
+                        }
+                    }
                     chats.Add(new Chat
                     {
                         Name = group.Name,
@@ -155,8 +179,14 @@ namespace ChatApp.Server.Services.NewFolder
             // Step 8: Add empty chats for users with no messages
             foreach (var user in allUsers.Values)
             {
+
                 if (!conversationsByUser.ContainsKey(user.Id))
                 {
+                    if (user.Groups != null)
+                {
+                    user.Groups.Clear();
+                }
+
                     chats.Add(new Chat
                     {
                         Name = user.UserName,

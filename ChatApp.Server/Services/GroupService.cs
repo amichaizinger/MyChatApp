@@ -40,6 +40,16 @@ namespace ChatApp.Server.Services.NewFolder
 
         public async Task<bool> NewGroupAsync(Group group)
         {
+            List<string> userIds = group.Members.Select(u => u.Id).ToList();
+
+            // 2. Fetch existing users from the database by their IDs
+            var groupsUsers = _db.Users
+                .Where(u => userIds.Contains(u.Id))
+                .ToList();
+
+            group.Members.Clear();
+            group.Members = groupsUsers;
+
             _db.Groups.Add(group);
             await _db.SaveChangesAsync();
             return true;

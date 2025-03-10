@@ -17,6 +17,7 @@ using System.Windows;
 using ChatAppSolid.Models.ChatAppSolid.Models;
 using System.Windows.Controls;
 using System.Text.Json;
+using System.ComponentModel.Design;
 
 namespace ChatAppSOLID.ViewModels
 {
@@ -265,11 +266,13 @@ namespace ChatAppSOLID.ViewModels
             _users.Add(new SelectableUser(new User("kslfes", "fskenfsne")));
             Users = new ObservableCollection<SelectableUser>(_users);
             // Add initial chat
-            AllChats.Add(new Chat("Best Chat App", null, new User { Id = "UserId" }, null)); // Private chat
+            AllChats.Add(new Chat("Best Chat App", "null", new User { Id = "UserId" }, null)); // Private chat
             AllChats[0].AddMessage(new Message
             {
-                Content = "Welcome to Best Chat App!" + 
-                " 👋 Behold the GREATEST messaging app ever created! Our genius developers have crafted the most AMAZING chat experience known to humankind! You'll be BLOWN AWAY by how smooth and intuitive everything is!",
+                Content = "Welcome to Best Chat App! 👋\n" +
+              "Behold the GREATEST messaging app ever created!\n" +
+              "Our genius developers have crafted the most AMAZING chat experience known to humankind!\n" +
+              "You'll be BLOWN AWAY by how smooth and intuitive everything is!",
                 Command = CommandType.SendMessage,
                 SenderId = "UserId",
                 ReciverId = UserId,
@@ -296,6 +299,7 @@ namespace ChatAppSOLID.ViewModels
                     Message message = await sendCommand.ExecuteAsync(chatClient.ClientSocket);
                     SelectedChat.AddMessage(message, this);
                     MessageText = string.Empty;
+                    FilterChats();
                 }
                 catch (Exception ex)
                 {
@@ -309,44 +313,53 @@ namespace ChatAppSOLID.ViewModels
             if (_filteredChats == null)
                 _filteredChats = new ObservableCollection<Chat>();
 
+            Chat previouslySelected = SelectedChat;
+
             _filteredChats.Clear();
 
             var chatsToShow = string.IsNullOrWhiteSpace(SearchText)
                 ? AllChats
                 : AllChats.Where(chat => chat.Name?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) == true);
 
-            foreach (var chat in chatsToShow)
+            var orderedChats = chatsToShow
+    .OrderByDescending(chat =>
+        chat.Messages.Count > 0
+            ? chat.Messages.Max(m => m.SentAt)
+            : DateTime.MinValue);
+
+            foreach (var chat in orderedChats)
             {
                 _filteredChats.Add(chat);
             }
 
             OnPropertyChanged(nameof(FilteredChats));
-        }
 
+            if (previouslySelected != null && _filteredChats.Contains(previouslySelected))
+            {
+                SelectedChat = previouslySelected;
+            }
+        }
         private void RefreshUsers()
         {
-            // Store selected state to preserve it
             var selectedIds = Users
                 .Where(u => u.IsSelected)
                 .Select(u => u.User.Id)
                 .ToList();
 
-            // Clear and rebuild users collection
-            _users.Clear();
+            Users.Clear();
 
             var usersToAdd = AllChats
-                .Where(chat => chat.Friend != null)
+                .Where(chat => chat.Friend != null && string.IsNullOrEmpty(chat.GroupId))
                 .Select(chat => new SelectableUser(chat.Friend))
                 .ToList();
 
             foreach (var user in usersToAdd)
             {
-                // Restore selected state
                 if (selectedIds.Contains(user.User.Id))
                 {
                     user.IsSelected = true;
                 }
-                _users.Add(user);
+                Users.Add(user);
             }
 
             OnPropertyChanged(nameof(Users));
@@ -431,31 +444,39 @@ namespace ChatAppSOLID.ViewModels
             IsMenuOpen = true;
         }
 
-        private void CreateGroup()
+        private async void CreateGroup()
         {
+            IsGroupPopupOpen = false;
+
             if (CanCreateGroup)
             {
                 try
                 {
-                    var groupName = NewGroupName;
-                    List<User> members = SelectedContacts.Select(su => su.User).ToList();
-                    CreateGroupCommand createGroupCommand = new CreateGroupCommand(UserId, groupName, members);
+                    
 
-                    // Here you would typically call ExecuteAsync and handle the result
-
-                    IsGroupPopupOpen = false;
-
-                    // Reset selected state for all users
-                    foreach (var user in Users)
+                    if (!string.IsNullOrEmpty(NewGroupName) && SelectedContacts.Any())
                     {
-                        user.IsSelected = false;
+                        var groupName = NewGroupName;
+                        List<User>? members = SelectedContacts.Select(su => su.User).ToList();
+
+                        members.Add(new User(UserId, Username));
+                        CreateGroupCommand createGroupCommand = new CreateGroupCommand(UserId, groupName, members);
+                        await createGroupCommand.ExecuteAsync(chatClient.ClientSocket);
+
+                        // Here you would typically call ExecuteAsync and handle the result
+
+                        // Reset selected state for all users
+                        foreach (var user in Users)
+                        {
+                            user.IsSelected = false;
+                        }
+
+                        // Reset group name
+                        NewGroupName = string.Empty;
+
+                        OnPropertyChanged(nameof(SelectedContacts));
+                        OnPropertyChanged(nameof(CanCreateGroup));
                     }
-
-                    // Reset group name
-                    NewGroupName = string.Empty;
-
-                    OnPropertyChanged(nameof(SelectedContacts));
-                    OnPropertyChanged(nameof(CanCreateGroup));
                 }
                 catch (Exception ex)
                 {
@@ -466,7 +487,7 @@ namespace ChatAppSOLID.ViewModels
 
         public bool CanCreateGroup
         {
-            get => SelectedContacts.Any() && !string.IsNullOrEmpty(NewGroupName);
+            get =>  !string.IsNullOrEmpty(NewGroupName);
         }
 
         private void CloseAboutPopup()

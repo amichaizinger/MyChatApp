@@ -54,7 +54,7 @@ namespace ChatAppSolid.Models
             }
             public bool HasUnreadMessages => UnreadMessagesCount > 0; // Computed property
 
-            public User ?Friend { get; set; }
+            public User? Friend { get; set; }
             public string? GroupId { get; set; }
 
             public string LatestMessagePreview
